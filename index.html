@@ -769,6 +769,7 @@ function registrar(tipo, item, qtd, un, ref) {
     tipo:tipo, item:item, qtd:qtd, un:un||'un', ref:ref||'—',
     quem:(state.user && state.user.nome) || '—'
   });
+  salvarNuvem();
 }
 // Permissão: só GHV pode excluir
 function podeExcluir(){ return state.user && state.user.nome === 'GHV'; }
@@ -776,6 +777,45 @@ function proxId(prefixo, lista){
   var n = 0;
   lista.forEach(function(x){ var v = parseInt((x.id||'').replace(/\D/g,''),10)||0; if(v>n)n=v; });
   return prefixo + String(n+1).padStart(3,'0');
+}
+
+// ── PERSISTÊNCIA (nuvem via Apps Script) ─────────────────────────────────────
+var API_URL = 'https://script.google.com/macros/s/AKfycbzb3bTfiOIAqmSx31-cZIkVWDWVEMneKBHsvnBRs_gYl-kwWaNJJPrl_UzR-MMp1pPw/exec';
+function _dadosState(){
+  return {
+    bobinas:state.bobinas, materiais:state.materiais, produtos:state.produtos,
+    producoes:state.producoes, estoqueProd:state.estoqueProd, pedidos:state.pedidos,
+    historico:state.historico, proxLote:state.proxLote, proxPedido:state.proxPedido
+  };
+}
+var _salvarTimer = null;
+function salvarNuvem(){
+  clearTimeout(_salvarTimer);
+  _salvarTimer = setTimeout(function(){
+    try { fetch(API_URL, {method:'POST', mode:'no-cors', body:JSON.stringify(_dadosState())}); } catch(e){}
+  }, 500);
+}
+function carregarNuvem(cb){
+  window._ghvCarregou = function(d){
+    try{
+      if (d && d.bobinas) {
+        state.bobinas = d.bobinas;
+        if (d.materiais) state.materiais = d.materiais;
+        if (d.produtos) state.produtos = d.produtos;
+        state.producoes = d.producoes || [];
+        state.estoqueProd = d.estoqueProd || [];
+        state.pedidos = d.pedidos || [];
+        state.historico = d.historico || [];
+        if (d.proxLote) state.proxLote = d.proxLote;
+        if (d.proxPedido) state.proxPedido = d.proxPedido;
+      }
+    }catch(e){}
+    if (cb) cb();
+  };
+  var s = document.createElement('script');
+  s.src = API_URL + '?callback=_ghvCarregou&t=' + Date.now();
+  s.onerror = function(){ if(cb) cb(); };
+  document.body.appendChild(s);
 }
 
 // ── SENHA ────────────────────────────────────────────────────────────────────
@@ -841,6 +881,7 @@ function login(perfil, nome, sigla) {
   }
   renderDash(); renderBobinas(); renderProducao(); renderEstoque(); renderPedidos();
   toast('Bem-vindo, ' + nome.split(' ')[0] + '!', 'success');
+  carregarNuvem(function(){ renderDash(); renderBobinas(); renderProducao(); renderEstoque(); renderPedidos(); renderCatalogo(); });
 }
 
 // ── NAV ─────────────────────────────────────────────────────────────────────
@@ -908,12 +949,12 @@ function salvarMaterial() {
   if (!nome || gram<=0 || larg<=0) { toast('Preencha nome, gramatura e largura','error'); return; }
   if (id) { var m = state.materiais.find(function(x){return x.id===id}); m.nome=nome; m.gram=gram; m.largura=larg; }
   else { state.materiais.push({id:proxId('MAT',state.materiais),nome:nome,gram:gram,largura:larg}); }
-  fecharModal('modal-mat'); renderCatalogo(); toast('Material salvo!');
+  fecharModal('modal-mat'); renderCatalogo(); salvarNuvem(); toast('Material salvo!');
 }
 function excluirMaterial(id) {
   if (!podeExcluir()) { toast('Apenas o GHV pode excluir','error'); return; }
   state.materiais = state.materiais.filter(function(x){return x.id!==id});
-  renderCatalogo(); toast('Material excluído');
+  renderCatalogo(); salvarNuvem(); toast('Material excluído');
 }
 function abrirModalProduto(id) {
   var p = id ? state.produtos.find(function(x){return x.id===id}) : null;
@@ -930,12 +971,12 @@ function salvarProduto() {
   if (!nome || metros<=0) { toast('Preencha nome e metros por unidade','error'); return; }
   if (id) { var p = state.produtos.find(function(x){return x.id===id}); p.nome=nome; p.metros=metros; }
   else { state.produtos.push({id:proxId('PRD',state.produtos),nome:nome,metros:metros}); }
-  fecharModal('modal-prodcat'); renderCatalogo(); toast('Produto salvo!');
+  fecharModal('modal-prodcat'); renderCatalogo(); salvarNuvem(); toast('Produto salvo!');
 }
 function excluirProduto(id) {
   if (!podeExcluir()) { toast('Apenas o GHV pode excluir','error'); return; }
   state.produtos = state.produtos.filter(function(x){return x.id!==id});
-  renderCatalogo(); toast('Produto excluído');
+  renderCatalogo(); salvarNuvem(); toast('Produto excluído');
 }
 // Alimentam os selects a partir dos catálogos
 function popularMateriais() {
@@ -1388,7 +1429,7 @@ function cancelarOrdem(id) {
   const o = state.producoes.find(x=>x.id===id);
   if (!o || o.status!=='Aberta') return;
   state.producoes = state.producoes.filter(x=>x.id!==id);
-  renderProducao(); renderBobinas(); renderDash();
+  renderProducao(); renderBobinas(); renderDash(); salvarNuvem();
   toast('Ordem cancelada — reserva liberada');
 }
 
