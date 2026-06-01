@@ -552,26 +552,22 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
       </div>
       <div class="form-group">
         <label class="form-label">Produto</label>
-        <select class="form-select" id="mped-prod" onchange="verificarSaldoPedido()">
+        <select class="form-select" id="mped-prod" onchange="analisarPedido()">
           <option value="">Selecionar produto...</option>
         </select>
       </div>
       <div class="form-group">
         <label class="form-label">Quantidade</label>
-        <input class="form-input" id="mped-qtd" type="number" step="1" placeholder="0" oninput="verificarSaldoPedido()">
+        <input class="form-input" id="mped-qtd" type="number" step="1" placeholder="0" oninput="analisarPedido()">
       </div>
-      <div id="mped-saldo-info" class="form-calc" style="display:none">
-        <div class="calc-row"><span class="calc-label">Disponível em estoque</span><span class="calc-val" id="mped-disp">—</span></div>
-        <div class="calc-row"><span class="calc-label">Lote vinculado</span><span class="calc-val" id="mped-lote-vinc">—</span></div>
-        <div class="calc-row"><span class="calc-label">Status</span><span class="calc-val" id="mped-status-val">—</span></div>
-      </div>
+      <div id="mped-saldo-info" class="form-calc" style="display:none"></div>
       <div class="form-group">
         <label class="form-label">Observação</label>
         <input class="form-input" id="mped-obs" placeholder="Opcional">
       </div>
       <div class="btn-row">
         <button class="btn btn-outline btn-sm" onclick="fecharModal('modal-ped')">Cancelar</button>
-        <button class="btn btn-primary" style="flex:1" onclick="salvarPedido()">Fechar Pedido</button>
+        <button class="btn btn-success" style="flex:1" onclick="aceitarPedido()">Aceitar pedido</button>
       </div>
     </div>
   </div>
@@ -1060,7 +1056,12 @@ function renderEstoque() {
 // ── PEDIDOS ──────────────────────────────────────────────────────────────────
 function renderPedidos() {
   const html = state.pedidos.map(p => {
-    const sc = {Aberto:'blue',Faturado:'ok',Entregue:'ok',Cancelado:'err'}[p.status]||'gray';
+    const sc = {Aberto:'blue','Em produção':'blue',Parcial:'amber',Atendido:'ok',Faturado:'ok',Entregue:'ok',Cancelado:'err'}[p.status]||'gray';
+    const bd = (p.atendido!==undefined) ? '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">'
+      + (p.atendido>0?'<span class="badge badge-ok">'+p.atendido+' do estoque</span>':'')
+      + (p.produzindo>0?'<span class="badge badge-blue">'+p.produzindo+' em produção</span>':'')
+      + (p.pendente>0?'<span class="badge badge-err">'+p.pendente+' pendente</span>':'')
+      + '</div>' : '';
     return `<div class="card">
       <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px">
         <div>
@@ -1069,6 +1070,7 @@ function renderPedidos() {
         </div>
         <span class="badge badge-${sc}">${p.status}</span>
       </div>
+      ${bd}
       ${p.itens.map(it=>`
         <div style="background:var(--surface2);border-radius:var(--r);padding:8px 10px;margin-bottom:6px">
           <div style="display:flex;justify-content:space-between;font-size:12px">
@@ -1278,43 +1280,74 @@ function abrirModalPedido() {
   document.getElementById('mped-saldo-info').style.display = 'none';
   document.getElementById('modal-ped').classList.add('open');
 }
-function verificarSaldoPedido() {
-  const sel = document.getElementById('mped-prod');
-  const opt = sel.options[sel.selectedIndex];
-  const disp = parseFloat(opt.dataset.disp||0);
-  const lote = opt.dataset.lote||'—';
-  const qtd = parseFloat(document.getElementById('mped-qtd').value)||0;
-  if (sel.value && qtd>0) {
-    const ok = qtd <= disp;
-    document.getElementById('mped-disp').textContent = disp+' un.';
-    document.getElementById('mped-lote-vinc').textContent = lote;
-    const sv = document.getElementById('mped-status-val');
-    sv.textContent = ok ? '✓ Saldo suficiente' : '⚠ Sem saldo';
-    sv.className = 'calc-val '+(ok?'green':'red');
-    document.getElementById('mped-saldo-info').style.display = 'block';
-  }
+// Calcula: quanto atende do estoque, quanto dá pra produzir, quanto fica pendente
+function calcViabilidadePedido(prodId, qtd) {
+  const prod = state.produtos.find(p=>p.id===prodId);
+  const metrosUn = prod ? prod.metros : 0;
+  const ep = state.estoqueProd.find(e=>e.prodId===prodId);
+  const estoquePronto = ep ? ep.qtdDisp : 0;
+  const atende = Math.min(qtd, estoquePronto);
+  const falta = qtd - atende;
+  let melhorBob = null, maxLivres = 0;
+  state.bobinas.filter(b=>b.status==='Ativo').forEach(function(b){
+    const l = metrosLivres(b);
+    if (l > maxLivres) { maxLivres = l; melhorBob = b; }
+  });
+  const maxProd = (metrosUn>0 && melhorBob) ? Math.floor(maxLivres / metrosUn) : 0;
+  const produzir = Math.min(falta, maxProd);
+  const pendente = falta - produzir;
+  return {metrosUn, estoquePronto, atende, falta, melhorBob, maxLivres, produzir, pendente};
 }
-function salvarPedido() {
+function _linhaCalc(label, val, cor) {
+  return '<div class="calc-row"><span class="calc-label">'+label+'</span><span class="calc-val '+(cor||'')+'">'+val+'</span></div>';
+}
+function analisarPedido() {
+  const sel = document.getElementById('mped-prod');
+  const qtd = parseFloat(document.getElementById('mped-qtd').value)||0;
+  const box = document.getElementById('mped-saldo-info');
+  if (!sel.value || qtd<=0) { box.style.display='none'; return; }
+  const v = calcViabilidadePedido(sel.value, qtd);
+  let html = _linhaCalc('Atende do estoque agora', v.atende+' un.', 'green');
+  if (v.produzir>0) html += _linhaCalc('Produzir (reserva '+(v.melhorBob?v.melhorBob.lote:'')+')', v.produzir+' un.', 'blue');
+  if (v.pendente>0) html += _linhaCalc('Pendente — falta material', v.pendente+' un.', 'red');
+  const st = v.pendente>0 ? '⚠ Parcial' : (v.produzir>0 ? '🏭 Vai p/ produção' : '✓ Atende do estoque');
+  html += _linhaCalc('Resultado', st, v.pendente>0?'amber':'green');
+  box.innerHTML = html;
+  box.style.display = 'block';
+}
+function aceitarPedido() {
   const cli = document.getElementById('mped-cli').value.trim();
-  const prodSel = document.getElementById('mped-prod');
-  const prodOpt = prodSel.options[prodSel.selectedIndex];
+  const sel = document.getElementById('mped-prod');
   const qtd = parseFloat(document.getElementById('mped-qtd').value)||0;
   const num = document.getElementById('mped-num').value;
-  if (!cli || !prodSel.value || qtd<=0) { toast('Preencha cliente, produto e quantidade','error'); return; }
-  const disp = parseFloat(prodOpt.dataset.disp||0);
-  if (qtd > disp) { toast('Saldo insuficiente em estoque','error'); return; }
-  const ep = state.estoqueProd.find(e=>e.prodId===prodSel.value);
-  if (ep) ep.qtdDisp -= qtd;
+  if (!cli || !sel.value || qtd<=0) { toast('Preencha cliente, produto e quantidade','error'); return; }
+  const v = calcViabilidadePedido(sel.value, qtd);
+  const prodNome = (state.produtos.find(p=>p.id===sel.value)||{}).nome || sel.options[sel.selectedIndex].text;
+  // 1) baixa do estoque a parte que já está pronta
+  if (v.atende>0) { const ep = state.estoqueProd.find(e=>e.prodId===sel.value); if(ep) ep.qtdDisp -= v.atende; }
+  // 2) abre ordem de produção automática para o que dá para produzir
+  if (v.produzir>0 && v.melhorBob) {
+    const ol = gerarLoteProducao();
+    state.producoes.unshift({
+      id:proxId('ORD',state.producoes), lote:ol, bobId:v.melhorBob.id, bobLote:v.melhorBob.lote,
+      prodId:sel.value, prodNome, qtdPlan:v.produzir, metPrev:parseFloat((v.produzir*v.metrosUn).toFixed(1)),
+      metReal:null,qtdReal:null,perdaM:null,perdaPct:null,saldoApos:null,
+      data:new Date().toLocaleString('pt-BR').slice(0,16), op:state.user.nome,
+      status:'Aberta', pedidoNum:num
+    });
+    state.proxLote++;
+  }
+  // 3) status do pedido conforme o resultado
+  const status = v.pendente>0 ? 'Parcial' : (v.produzir>0 ? 'Em produção' : 'Atendido');
   state.pedidos.unshift({
-    id:'PED'+Date.now(), num, cliente:cli,
-    data:new Date().toLocaleDateString('pt-BR'),
-    status:'Aberto',
-    itens:[{prodNome:prodOpt.text, lote:prodOpt.dataset.lote, qtd}]
+    id:'PED'+Date.now(), num, cliente:cli, data:new Date().toLocaleDateString('pt-BR'),
+    status, qtd, atendido:v.atende, produzindo:v.produzir, pendente:v.pendente,
+    itens:[{prodNome, lote:'—', qtd}]
   });
   state.proxPedido++;
   fecharModal('modal-ped');
-  renderPedidos(); renderEstoque(); renderDash();
-  toast('Pedido '+num+' criado!');
+  renderPedidos(); renderEstoque(); renderProducao(); renderBobinas(); renderDash();
+  toast('Pedido '+num+' aceito — '+status);
 }
 
 // ── UTILS ────────────────────────────────────────────────────────────────────
