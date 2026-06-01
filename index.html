@@ -230,8 +230,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
   /* Modelo B: botão "+" central na barra; esconde FABs de canto */
   .nav-fab{display:flex}
   .fab{display:none!important}
-  #nav{padding-top:6px}
-  #nav [data-page="prod"]{padding-top:20px}
+  #nav [data-page="prod"]{display:none}
 }
 
 /* ── DESKTOP / WEB AMPLO (sidebar lateral + grid) ── */
@@ -742,7 +741,7 @@ function renderDash() {
   document.getElementById('dash-stats').innerHTML = `
     <div class="stat-card blue"><div class="stat-val">${ativas}</div><div class="stat-label">Bobinas ativas</div></div>
     <div class="stat-card ${baixas>0?'amber':'green'}"><div class="stat-val">${baixas}</div><div class="stat-label">Estoque baixo</div></div>
-    <div class="stat-card blue"><div class="stat-val">${prodMes}</div><div class="stat-label">Prod. este mês</div></div>
+    <div class="stat-card blue" onclick="navTo('prod',document.querySelector('[data-page=prod]'))" style="cursor:pointer"><div class="stat-val">${prodMes}</div><div class="stat-label">Prod. este mês</div></div>
     <div class="stat-card green"><div class="stat-val">${pedAbertos}</div><div class="stat-label">Pedidos abertos</div></div>
   `;
 
