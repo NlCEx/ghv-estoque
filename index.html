@@ -347,6 +347,9 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
       <button class="hdr-icon" id="btn-full" onclick="toggleFullscreen()" title="Tela cheia">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M8 3H5a2 2 0 00-2 2v3M21 8V5a2 2 0 00-2-2h-3M3 16v3a2 2 0 002 2h3M16 21h3a2 2 0 002-2v-3"/></svg>
       </button>
+      <button class="hdr-icon" id="btn-cat" onclick="abrirCatalogo()" title="Catálogos (materiais e produtos)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 7h16M4 12h16M4 17h10"/><circle cx="19" cy="17" r="2"/></svg>
+      </button>
       <div class="avatar" id="user-avatar">--</div>
     </div>
   </div>
@@ -364,6 +367,22 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
         <div class="stats-grid" id="dash-stats"></div>
         <div class="section-title">Bobinas em estoque</div>
         <div id="dash-bobinas"></div>
+      </div>
+    </div>
+
+    <!-- CATÁLOGO -->
+    <div class="page" id="page-cat">
+      <div class="page-pad">
+        <div class="section-header">
+          <div class="section-title" style="margin:0">Materiais (matéria-prima)</div>
+          <button class="btn btn-primary btn-sm" onclick="abrirModalMaterial()">+ Material</button>
+        </div>
+        <div id="cat-materiais"></div>
+        <div class="section-header" style="margin-top:24px">
+          <div class="section-title" style="margin:0">Produtos (itens produzidos)</div>
+          <button class="btn btn-primary btn-sm" onclick="abrirModalProduto()">+ Produto</button>
+        </div>
+        <div id="cat-produtos"></div>
       </div>
     </div>
 
@@ -454,11 +473,6 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
         <label class="form-label">Material</label>
         <select class="form-select" id="mb-mat" onchange="calcBobina()">
           <option value="">Selecionar...</option>
-          <option value="MAT001" data-gram="40" data-larg="140">TNT 40g Branco</option>
-          <option value="MAT002" data-gram="50" data-larg="160">SMS 50g Azul</option>
-          <option value="MAT003" data-gram="48" data-larg="140">Laminado 48g Azul</option>
-          <option value="MAT004" data-gram="40" data-larg="140">TNT 40g Verde</option>
-          <option value="MAT005" data-gram="50" data-larg="160">SMS 50g Verde</option>
         </select>
       </div>
       <div class="form-row">
@@ -504,18 +518,6 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
         <label class="form-label">Produto</label>
         <select class="form-select" id="mp-prod" onchange="calcProducao()">
           <option value="">Selecionar produto...</option>
-          <option value="PRD001" data-m="1.40">Avental Cirúrgico P</option>
-          <option value="PRD002" data-m="1.60">Avental Cirúrgico M</option>
-          <option value="PRD003" data-m="1.75">Avental Cirúrgico G</option>
-          <option value="PRD004" data-m="1.90">Avental Cirúrgico GG</option>
-          <option value="PRD005" data-m="0.45">Campo Cirúrgico P</option>
-          <option value="PRD006" data-m="0.90">Campo Cirúrgico M</option>
-          <option value="PRD007" data-m="2.00">Campo Cirúrgico G</option>
-          <option value="PRD008" data-m="0.40">Invólucro P</option>
-          <option value="PRD009" data-m="0.60">Invólucro M</option>
-          <option value="PRD010" data-m="0.90">Invólucro G</option>
-          <option value="PRD011" data-m="9.00">Kit Parto Normal</option>
-          <option value="PRD012" data-m="13.50">Kit Cirúrgico Geral</option>
         </select>
       </div>
       <div class="form-group">
@@ -592,6 +594,56 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
     </div>
   </div>
 
+  <!-- MODAL MATERIAL -->
+  <div class="modal-overlay" id="modal-mat">
+    <div class="modal">
+      <div class="modal-handle"></div>
+      <div class="modal-title" id="mmat-titulo">Novo Material</div>
+      <div class="modal-sub">Matéria-prima (não-tecido)</div>
+      <input type="hidden" id="mmat-id">
+      <div class="form-group">
+        <label class="form-label">Nome</label>
+        <input class="form-input" id="mmat-nome" placeholder="ex: TNT 40g Branco">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Gramatura (g/m²)</label>
+          <input class="form-input" id="mmat-gram" type="number" placeholder="40">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Largura (cm)</label>
+          <input class="form-input" id="mmat-larg" type="number" placeholder="140">
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-outline btn-sm" onclick="fecharModal('modal-mat')">Cancelar</button>
+        <button class="btn btn-primary" style="flex:1" onclick="salvarMaterial()">Salvar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL PRODUTO (catálogo) -->
+  <div class="modal-overlay" id="modal-prodcat">
+    <div class="modal">
+      <div class="modal-handle"></div>
+      <div class="modal-title" id="mprodc-titulo">Novo Produto</div>
+      <div class="modal-sub">Item produzido (cortado da bobina)</div>
+      <input type="hidden" id="mprodc-id">
+      <div class="form-group">
+        <label class="form-label">Nome</label>
+        <input class="form-input" id="mprodc-nome" placeholder="ex: Avental Cirúrgico G">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Metros por unidade (m)</label>
+        <input class="form-input" id="mprodc-metros" type="number" step="0.01" placeholder="1.75">
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-outline btn-sm" onclick="fecharModal('modal-prodcat')">Cancelar</button>
+        <button class="btn btn-primary" style="flex:1" onclick="salvarProduto()">Salvar</button>
+      </div>
+    </div>
+  </div>
+
 </div><!-- /shell -->
 
 <script>
@@ -620,7 +672,36 @@ const state = {
   ],
   proxLote: 3,
   proxPedido: 3,
+  // ── CATÁLOGOS MESTRES ──
+  materiais: [
+    {id:'MAT001', nome:'TNT 40g Branco',     gram:40, largura:140},
+    {id:'MAT002', nome:'SMS 50g Azul',       gram:50, largura:160},
+    {id:'MAT003', nome:'Laminado 48g Azul',  gram:48, largura:140},
+    {id:'MAT004', nome:'TNT 40g Verde',      gram:40, largura:140},
+    {id:'MAT005', nome:'SMS 50g Verde',      gram:50, largura:160},
+  ],
+  produtos: [
+    {id:'PRD001', nome:'Avental Cirúrgico P',  metros:1.40},
+    {id:'PRD002', nome:'Avental Cirúrgico M',  metros:1.60},
+    {id:'PRD003', nome:'Avental Cirúrgico G',  metros:1.75},
+    {id:'PRD004', nome:'Avental Cirúrgico GG', metros:1.90},
+    {id:'PRD005', nome:'Campo Cirúrgico P',    metros:0.45},
+    {id:'PRD006', nome:'Campo Cirúrgico M',    metros:0.90},
+    {id:'PRD007', nome:'Campo Cirúrgico G',    metros:2.00},
+    {id:'PRD008', nome:'Invólucro P',          metros:0.40},
+    {id:'PRD009', nome:'Invólucro M',          metros:0.60},
+    {id:'PRD010', nome:'Invólucro G',          metros:0.90},
+    {id:'PRD011', nome:'Kit Parto Normal',     metros:9.00},
+    {id:'PRD012', nome:'Kit Cirúrgico Geral',  metros:13.50},
+  ],
 };
+// Permissão: só GHV pode excluir
+function podeExcluir(){ return state.user && state.user.nome === 'GHV'; }
+function proxId(prefixo, lista){
+  var n = 0;
+  lista.forEach(function(x){ var v = parseInt((x.id||'').replace(/\D/g,''),10)||0; if(v>n)n=v; });
+  return prefixo + String(n+1).padStart(3,'0');
+}
 
 // ── SENHA ────────────────────────────────────────────────────────────────────
 var _loginPendente = null;
@@ -704,6 +785,95 @@ function cadastrarContextual() {
   if (p === 'prod') abrirModalProducao();
   else if (p === 'ped') abrirModalPedido();
   else abrirModalBobina();
+}
+
+// ── CATÁLOGOS (Materiais e Produtos) ─────────────────────────────────────────
+function abrirCatalogo() {
+  document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active')});
+  document.querySelectorAll('.nav-btn').forEach(function(b){b.classList.remove('active')});
+  document.getElementById('page-cat').classList.add('active');
+  document.getElementById('page-title').textContent = 'Catálogos';
+  renderCatalogo();
+}
+function renderCatalogo() {
+  var ex = podeExcluir();
+  document.getElementById('cat-materiais').innerHTML = state.materiais.map(function(m){
+    return '<div class="card-sm" style="display:flex;align-items:center;justify-content:space-between;gap:10px">'
+      + '<div style="min-width:0"><div style="font-size:13px;font-weight:500">'+m.nome+'</div>'
+      + '<div style="font-size:10px;color:var(--text2);margin-top:2px">'+m.gram+'g/m² · '+m.largura+'cm · '+m.id+'</div></div>'
+      + '<div style="display:flex;gap:6px;flex-shrink:0">'
+      + '<button class="btn btn-outline btn-sm" onclick="abrirModalMaterial(\''+m.id+'\')">Editar</button>'
+      + (ex?'<button class="btn btn-danger btn-sm" onclick="excluirMaterial(\''+m.id+'\')">Excluir</button>':'')
+      + '</div></div>';
+  }).join('') || '<div style="color:var(--text3);font-size:12px;padding:8px 0">Nenhum material cadastrado.</div>';
+  document.getElementById('cat-produtos').innerHTML = state.produtos.map(function(p){
+    return '<div class="card-sm" style="display:flex;align-items:center;justify-content:space-between;gap:10px">'
+      + '<div style="min-width:0"><div style="font-size:13px;font-weight:500">'+p.nome+'</div>'
+      + '<div style="font-size:10px;color:var(--text2);margin-top:2px">'+p.metros.toFixed(2)+' m/unidade · '+p.id+'</div></div>'
+      + '<div style="display:flex;gap:6px;flex-shrink:0">'
+      + '<button class="btn btn-outline btn-sm" onclick="abrirModalProduto(\''+p.id+'\')">Editar</button>'
+      + (ex?'<button class="btn btn-danger btn-sm" onclick="excluirProduto(\''+p.id+'\')">Excluir</button>':'')
+      + '</div></div>';
+  }).join('') || '<div style="color:var(--text3);font-size:12px;padding:8px 0">Nenhum produto cadastrado.</div>';
+}
+function abrirModalMaterial(id) {
+  var m = id ? state.materiais.find(function(x){return x.id===id}) : null;
+  document.getElementById('mmat-titulo').textContent = m ? 'Editar Material' : 'Novo Material';
+  document.getElementById('mmat-id').value = m ? m.id : '';
+  document.getElementById('mmat-nome').value = m ? m.nome : '';
+  document.getElementById('mmat-gram').value = m ? m.gram : '';
+  document.getElementById('mmat-larg').value = m ? m.largura : '';
+  document.getElementById('modal-mat').classList.add('open');
+}
+function salvarMaterial() {
+  var id = document.getElementById('mmat-id').value;
+  var nome = document.getElementById('mmat-nome').value.trim();
+  var gram = parseFloat(document.getElementById('mmat-gram').value)||0;
+  var larg = parseFloat(document.getElementById('mmat-larg').value)||0;
+  if (!nome || gram<=0 || larg<=0) { toast('Preencha nome, gramatura e largura','error'); return; }
+  if (id) { var m = state.materiais.find(function(x){return x.id===id}); m.nome=nome; m.gram=gram; m.largura=larg; }
+  else { state.materiais.push({id:proxId('MAT',state.materiais),nome:nome,gram:gram,largura:larg}); }
+  fecharModal('modal-mat'); renderCatalogo(); toast('Material salvo!');
+}
+function excluirMaterial(id) {
+  if (!podeExcluir()) { toast('Apenas o GHV pode excluir','error'); return; }
+  state.materiais = state.materiais.filter(function(x){return x.id!==id});
+  renderCatalogo(); toast('Material excluído');
+}
+function abrirModalProduto(id) {
+  var p = id ? state.produtos.find(function(x){return x.id===id}) : null;
+  document.getElementById('mprodc-titulo').textContent = p ? 'Editar Produto' : 'Novo Produto';
+  document.getElementById('mprodc-id').value = p ? p.id : '';
+  document.getElementById('mprodc-nome').value = p ? p.nome : '';
+  document.getElementById('mprodc-metros').value = p ? p.metros : '';
+  document.getElementById('modal-prodcat').classList.add('open');
+}
+function salvarProduto() {
+  var id = document.getElementById('mprodc-id').value;
+  var nome = document.getElementById('mprodc-nome').value.trim();
+  var metros = parseFloat(document.getElementById('mprodc-metros').value)||0;
+  if (!nome || metros<=0) { toast('Preencha nome e metros por unidade','error'); return; }
+  if (id) { var p = state.produtos.find(function(x){return x.id===id}); p.nome=nome; p.metros=metros; }
+  else { state.produtos.push({id:proxId('PRD',state.produtos),nome:nome,metros:metros}); }
+  fecharModal('modal-prodcat'); renderCatalogo(); toast('Produto salvo!');
+}
+function excluirProduto(id) {
+  if (!podeExcluir()) { toast('Apenas o GHV pode excluir','error'); return; }
+  state.produtos = state.produtos.filter(function(x){return x.id!==id});
+  renderCatalogo(); toast('Produto excluído');
+}
+// Alimentam os selects a partir dos catálogos
+function popularMateriais() {
+  var sel = document.getElementById('mb-mat'); if(!sel) return;
+  sel.innerHTML = '<option value="">Selecionar...</option>' + state.materiais.map(function(m){
+    return '<option value="'+m.id+'" data-gram="'+m.gram+'" data-larg="'+m.largura+'">'+m.nome+'</option>';
+  }).join('');
+}
+function popularProdutos() {
+  var sel = document.getElementById('mp-prod'); if(!sel) return;
+  sel.innerHTML = '<option value="">Selecionar produto...</option>' + state.produtos.map(function(p){
+    return '<option value="'+p.id+'" data-m="'+p.metros+'">'+p.nome+'</option>';
+  }).join('');
 }
 
 // ── TOAST ───────────────────────────────────────────────────────────────────
@@ -889,6 +1059,7 @@ function renderPedidos() {
 
 // ── MODAL BOBINA ─────────────────────────────────────────────────────────────
 function abrirModalBobina() {
+  popularMateriais();
   document.getElementById('modal-bob').classList.add('open');
   document.getElementById('mb-lote').value = '';
   document.getElementById('mb-mat').value = '';
@@ -947,6 +1118,7 @@ function atualizarSelectsBobinas() {
 }
 function abrirModalProducao() {
   atualizarSelectsBobinas();
+  popularProdutos();
   const lote = gerarLoteProducao();
   document.getElementById('mp-lote').textContent = lote;
   document.getElementById('mp-bob').value = '';
