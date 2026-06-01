@@ -1,0 +1,1135 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0D2C54">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="GHV Estoque">
+<title>GHV — Estoque</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0A1628;
+  --surface:#0F2040;
+  --surface2:#162850;
+  --card:#1A3060;
+  --card2:#1E3870;
+  --border:#2A4A80;
+  --border2:#3A5A90;
+  --blue:#2E86DE;
+  --blue2:#5BA4F5;
+  --blue3:#A8CDFA;
+  --accent:#00D4FF;
+  --green:#00E676;
+  --amber:#FFB300;
+  --red:#FF5252;
+  --text:#EEF4FF;
+  --text2:#8AAFD4;
+  --text3:#4A6A94;
+  --mono:'DM Mono',monospace;
+  --sans:'DM Sans',sans-serif;
+  --r:12px;--r2:18px;--r3:24px;
+  --shadow:0 8px 32px rgba(0,0,0,.4);
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--sans);overflow:hidden;font-size:14px}
+
+/* ── SHELL ── */
+#shell{display:flex;flex-direction:column;height:100vh;max-width:430px;margin:0 auto;position:relative;overflow:hidden;background:var(--bg)}
+
+/* ── HEADER ── */
+#header{padding:52px 20px 16px;background:linear-gradient(180deg,var(--surface) 0%,transparent 100%);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.logo{display:flex;align-items:center;gap:10px}
+.logo-mark{width:34px;height:34px;background:var(--blue);border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:13px;color:#fff;letter-spacing:.5px}
+.logo-text{font-size:18px;font-weight:600;letter-spacing:-.3px}
+.logo-sub{font-size:10px;color:var(--text2);font-weight:400;margin-top:1px}
+.header-actions{display:flex;gap:8px;align-items:center}
+.avatar{width:32px;height:32px;background:var(--card2);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:var(--blue2);border:1.5px solid var(--border2)}
+
+/* ── PAGES ── */
+#pages{flex:1;overflow:hidden;position:relative}
+.page{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;padding:0 0 90px;opacity:0;pointer-events:none;transform:translateY(12px);transition:opacity .22s ease,transform .22s ease}
+.page.active{opacity:1;pointer-events:all;transform:translateY(0)}
+.page-pad{padding:0 16px}
+
+/* ── BOTTOM NAV ── */
+#nav{position:absolute;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--border);display:flex;padding:8px 4px calc(8px + env(safe-area-inset-bottom));z-index:100}
+.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 4px;border:none;background:none;color:var(--text3);cursor:pointer;border-radius:var(--r);transition:all .15s;font-family:var(--sans)}
+.nav-btn.active{color:var(--blue2)}
+.nav-btn svg{width:20px;height:20px;stroke-width:1.8}
+.nav-btn span{font-size:9px;font-weight:500;letter-spacing:.3px;text-transform:uppercase}
+.nav-dot{width:4px;height:4px;border-radius:50%;background:var(--blue);position:absolute;bottom:2px}
+
+/* ── CARDS ── */
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--r2);padding:16px;margin-bottom:10px}
+.card-sm{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:12px;margin-bottom:8px}
+.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.card-title{font-size:12px;font-weight:500;color:var(--text2);text-transform:uppercase;letter-spacing:.8px}
+
+/* ── STAT CARDS ── */
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.stat-card{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r2);padding:16px;position:relative;overflow:hidden}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.stat-card.blue::before{background:var(--blue)}
+.stat-card.green::before{background:var(--green)}
+.stat-card.amber::before{background:var(--amber)}
+.stat-card.red::before{background:var(--red)}
+.stat-val{font-size:28px;font-weight:600;line-height:1;margin-bottom:4px}
+.stat-card.blue .stat-val{color:var(--blue2)}
+.stat-card.green .stat-val{color:var(--green)}
+.stat-card.amber .stat-val{color:var(--amber)}
+.stat-card.red .stat-val{color:var(--red)}
+.stat-label{font-size:11px;color:var(--text2);font-weight:400}
+
+/* ── BADGES ── */
+.badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:600;padding:3px 8px;border-radius:20px;letter-spacing:.3px}
+.badge-ok{background:rgba(0,230,118,.12);color:var(--green);border:1px solid rgba(0,230,118,.2)}
+.badge-warn{background:rgba(255,179,0,.12);color:var(--amber);border:1px solid rgba(255,179,0,.2)}
+.badge-err{background:rgba(255,82,82,.12);color:var(--red);border:1px solid rgba(255,82,82,.2)}
+.badge-blue{background:rgba(46,134,222,.12);color:var(--blue2);border:1px solid rgba(46,134,222,.2)}
+.badge-gray{background:rgba(138,175,212,.08);color:var(--text2);border:1px solid var(--border)}
+
+/* ── LISTA ── */
+.list-item{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border);cursor:pointer;transition:opacity .1s}
+.list-item:last-child{border-bottom:none}
+.list-item:active{opacity:.7}
+.list-icon{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.li-blue{background:rgba(46,134,222,.15);border:1px solid rgba(46,134,222,.2)}
+.li-green{background:rgba(0,230,118,.1);border:1px solid rgba(0,230,118,.15)}
+.li-amber{background:rgba(255,179,0,.1);border:1px solid rgba(255,179,0,.15)}
+.li-red{background:rgba(255,82,82,.1);border:1px solid rgba(255,82,82,.15)}
+.li-content{flex:1;min-width:0}
+.li-title{font-size:13px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.li-sub{font-size:11px;color:var(--text2);margin-top:2px}
+.li-right{text-align:right;flex-shrink:0}
+.li-val{font-size:13px;font-weight:600;color:var(--text)}
+.li-meta{font-size:10px;color:var(--text3);margin-top:2px}
+
+/* ── FORMS ── */
+.form-group{margin-bottom:14px}
+.form-label{font-size:11px;font-weight:500;color:var(--text2);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px;display:block}
+.form-input,.form-select{width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:var(--r);padding:11px 14px;color:var(--text);font-family:var(--sans);font-size:13px;outline:none;transition:border .15s;-webkit-appearance:none}
+.form-input:focus,.form-select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(46,134,222,.15)}
+.form-input[readonly]{color:var(--accent);font-family:var(--mono);font-size:12px;background:rgba(0,212,255,.05);border-color:rgba(0,212,255,.2)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.form-calc{background:rgba(46,134,222,.06);border:1px solid rgba(46,134,222,.15);border-radius:var(--r);padding:12px;margin-bottom:14px}
+.calc-row{display:flex;justify-content:space-between;align-items:center;padding:4px 0}
+.calc-row:not(:last-child){border-bottom:1px solid rgba(46,134,222,.1)}
+.calc-label{font-size:11px;color:var(--text2)}
+.calc-val{font-size:13px;font-weight:600;color:var(--blue2);font-family:var(--mono)}
+.calc-val.green{color:var(--green)}
+.calc-val.amber{color:var(--amber)}
+.calc-val.red{color:var(--red)}
+
+/* ── BUTTONS ── */
+.btn{width:100%;padding:14px;border-radius:var(--r2);border:none;font-family:var(--sans);font-size:14px;font-weight:600;cursor:pointer;transition:all .15s;letter-spacing:.2px}
+.btn:active{transform:scale(.98)}
+.btn-primary{background:var(--blue);color:#fff}
+.btn-primary:hover{background:#2070C0}
+.btn-success{background:linear-gradient(135deg,#00C853,#00E676);color:#003300}
+.btn-outline{background:transparent;color:var(--blue2);border:1px solid var(--border2)}
+.btn-danger{background:rgba(255,82,82,.15);color:var(--red);border:1px solid rgba(255,82,82,.2)}
+.btn-sm{padding:8px 16px;width:auto;font-size:12px;border-radius:var(--r)}
+.btn-row{display:flex;gap:10px;margin-top:16px}
+
+/* ── SECTION TITLE ── */
+.section-title{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin:20px 0 10px}
+.section-header{display:flex;align-items:center;justify-content:space-between;margin:20px 0 10px}
+
+/* ── LOTE DISPLAY ── */
+.lote-display{background:linear-gradient(135deg,rgba(0,212,255,.08),rgba(46,134,222,.06));border:1px solid rgba(0,212,255,.2);border-radius:var(--r2);padding:16px;display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.lote-label{font-size:10px;color:var(--accent);text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px}
+.lote-code{font-size:20px;font-weight:600;color:var(--accent);font-family:var(--mono);letter-spacing:1px}
+
+/* ── ALERT BAR ── */
+.alert-bar{background:rgba(255,179,0,.1);border:1px solid rgba(255,179,0,.2);border-radius:var(--r);padding:10px 14px;display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.alert-bar svg{flex-shrink:0;color:var(--amber)}
+.alert-text{font-size:12px;color:var(--amber);line-height:1.4}
+
+/* ── MODAL ── */
+.modal-overlay{position:absolute;inset:0;background:rgba(5,12,30,.8);z-index:200;display:none;align-items:flex-end;backdrop-filter:blur(4px)}
+.modal-overlay.open{display:flex}
+.modal{background:var(--surface);border-top:1px solid var(--border2);border-radius:var(--r3) var(--r3) 0 0;padding:20px 20px calc(20px + env(safe-area-inset-bottom));width:100%;max-height:90vh;overflow-y:auto;animation:slideUp .25s ease}
+@keyframes slideUp{from{transform:translateY(60px);opacity:0}to{transform:translateY(0);opacity:1}}
+.modal-handle{width:40px;height:4px;background:var(--border2);border-radius:2px;margin:0 auto 20px}
+.modal-title{font-size:16px;font-weight:600;margin-bottom:6px}
+.modal-sub{font-size:12px;color:var(--text2);margin-bottom:20px}
+
+/* ── LOGIN ── */
+#login-screen{position:absolute;inset:0;background:var(--bg);z-index:300;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;gap:24px}
+.login-logo{width:72px;height:72px;background:var(--blue);border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;color:#fff;margin-bottom:8px;box-shadow:0 16px 40px rgba(46,134,222,.3)}
+.login-title{font-size:26px;font-weight:700;text-align:center;letter-spacing:-.5px}
+.login-sub{font-size:13px;color:var(--text2);text-align:center;line-height:1.5;margin-top:-12px}
+.login-form{width:100%;display:flex;flex-direction:column;gap:12px}
+.user-chips{display:flex;flex-direction:column;gap:8px;width:100%}
+.user-chip{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r2);padding:14px 16px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:all .15s}
+.user-chip:active,.user-chip:hover{border-color:var(--blue);background:var(--card)}
+.chip-avatar{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0}
+.chip-info{flex:1}
+.chip-name{font-size:13px;font-weight:500}
+.chip-role{font-size:11px;color:var(--text2);margin-top:1px}
+
+/* ── PROGRESS BAR ── */
+.prog-bar{height:4px;background:var(--border);border-radius:2px;overflow:hidden;margin-top:6px}
+.prog-fill{height:100%;border-radius:2px;transition:width .3s}
+
+/* ── SCROLL STYLE ── */
+.page::-webkit-scrollbar{width:2px}
+.page::-webkit-scrollbar-track{background:transparent}
+.page::-webkit-scrollbar-thumb{background:var(--border2);border-radius:1px}
+
+/* ── TOAST ── */
+.toast{position:absolute;top:60px;left:16px;right:16px;background:var(--card2);border:1px solid var(--border2);border-radius:var(--r2);padding:14px 16px;display:flex;align-items:center;gap:10px;z-index:400;font-size:13px;font-weight:500;transform:translateY(-20px);opacity:0;transition:all .25s;pointer-events:none}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.success{border-color:rgba(0,230,118,.3);color:var(--green)}
+.toast.error{border-color:rgba(255,82,82,.3);color:var(--red)}
+
+/* ── HISTORICO ── */
+.hist-item{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)}
+.hist-item:last-child{border-bottom:none}
+.hist-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:4px}
+.hist-content{flex:1}
+.hist-title{font-size:12px;font-weight:500}
+.hist-meta{font-size:10px;color:var(--text3);margin-top:2px}
+.hist-val{font-size:11px;font-weight:600;color:var(--text2);text-align:right;font-family:var(--mono)}
+
+/* ── FAB ── */
+.fab{position:absolute;bottom:84px;right:20px;width:52px;height:52px;border-radius:50%;background:var(--blue);border:none;color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 8px 24px rgba(46,134,222,.4);transition:all .2s;z-index:50}
+.fab:active{transform:scale(.93)}
+.fab svg{width:22px;height:22px;stroke-width:2}
+
+/* ── HEADER ICON BTNS ── */
+.hdr-icon{width:32px;height:32px;border:1px solid var(--border2);border-radius:8px;background:var(--surface2);color:var(--text2);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s;flex-shrink:0}
+.hdr-icon:active{opacity:.7}
+.hdr-icon svg{width:16px;height:16px;stroke-width:2;pointer-events:none}
+
+/* ── MOBILE (auto via largura de tela) ── */
+@media (max-width:600px){
+  #shell{max-width:100%}
+  .btn{min-height:48px;font-size:15px}
+  .btn-sm{min-height:36px}
+  .form-input,.form-select{min-height:48px;font-size:15px;padding:13px 14px}
+  .nav-btn{padding:8px 6px}
+  .nav-btn span{font-size:10px}
+  .stat-val{font-size:32px}
+  .list-item{padding:14px 0}
+  .li-title{font-size:14px}
+  .card-sm{padding:14px}
+  .modal{padding:24px 20px calc(24px + env(safe-area-inset-bottom))}
+}
+
+/* ── DESKTOP / WEB AMPLO (sidebar lateral + grid) ── */
+@media (min-width:900px){
+  #shell{max-width:1600px;display:grid;grid-template-columns:240px 1fr;grid-template-rows:auto 1fr;grid-template-areas:"nav header" "nav pages"}
+  #nav{grid-area:nav;position:static;flex-direction:column;justify-content:flex-start;gap:4px;padding:20px 12px;border-top:none;border-right:1px solid var(--border);z-index:1}
+  .nav-btn{flex:0 0 auto;flex-direction:row;justify-content:flex-start;gap:14px;padding:12px 16px;border-radius:10px}
+  .nav-btn svg{width:22px;height:22px}
+  .nav-btn span{font-size:14px;text-transform:none;letter-spacing:0}
+  .nav-btn.active{background:rgba(46,134,222,.12)}
+  #header{grid-area:header;padding:20px 32px}
+  #pages{grid-area:pages}
+  .page{padding:0 0 24px}
+  .page-pad{padding:24px 32px;max-width:1200px;margin:0 auto}
+  .stats-grid{grid-template-columns:repeat(4,1fr)}
+  .fab{bottom:32px;right:32px}
+  .user-chips,.login-form{max-width:380px}
+}
+
+/* ── LIGHT MODE ── */
+.light{
+  --bg:#F0F4FF;
+  --surface:#FFFFFF;
+  --surface2:#F5F8FF;
+  --card:#FFFFFF;
+  --card2:#E8F0FE;
+  --border:#D0DFF0;
+  --border2:#B0C8E8;
+  --text:#1A2C4A;
+  --text2:#4A6A8A;
+  --text3:#8AAFD4;
+}
+.light #shell,.light .page{background:var(--bg)}
+.light .modal-overlay{background:rgba(10,22,40,.55)}
+.light .toast{background:var(--surface);box-shadow:0 4px 20px rgba(0,0,0,.12)}
+.light .user-chip:hover{background:var(--card2)}
+.light #login-screen{background:var(--bg)}
+
+/* ── RASTREIO ── */
+.trace-chain{display:flex;flex-direction:column;gap:0}
+.trace-node{display:flex;gap:12px;align-items:flex-start}
+.trace-line-wrap{display:flex;flex-direction:column;align-items:center;width:20px;flex-shrink:0}
+.trace-circle{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;flex-shrink:0}
+.trace-vline{width:2px;flex:1;min-height:20px;background:var(--border)}
+.trace-content{flex:1;padding-bottom:16px}
+.trace-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;margin-bottom:2px}
+.trace-val{font-size:13px;color:var(--text);font-family:var(--mono)}
+.trace-sub{font-size:11px;color:var(--text2);margin-top:2px}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-logo">GHV</div>
+  <div>
+    <div class="login-title">GHV Estoque</div>
+    <div class="login-sub" style="margin-top:8px">Paramentação Médica<br>Selecione seu perfil para entrar</div>
+  </div>
+  <div class="user-chips">
+    <div class="user-chip" onclick="pedirSenha('Admin','GHV','GH','ghv')">
+      <div class="chip-avatar" style="background:rgba(46,134,222,.15);color:var(--blue2)">GH</div>
+      <div class="chip-info"><div class="chip-name">GHV</div><div class="chip-role">Administrador · Acesso total</div></div>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+    </div>
+    <div class="user-chip" onclick="pedirSenha('Operador','CONFORTEL','CT','ct')">
+      <div class="chip-avatar" style="background:rgba(0,230,118,.1);color:var(--green)">CT</div>
+      <div class="chip-info"><div class="chip-name">CONFORTEL</div><div class="chip-role">Operador · Produção e estoque</div></div>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+    </div>
+    <div class="user-chip" onclick="pedirSenha('Operador','JMSA','JM','jm')">
+      <div class="chip-avatar" style="background:rgba(255,179,0,.1);color:var(--amber)">JM</div>
+      <div class="chip-info"><div class="chip-name">JMSA</div><div class="chip-role">Operador · Produção e estoque</div></div>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL SENHA -->
+<div id="senha-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:400;align-items:center;justify-content:center">
+  <div style="background:var(--surface);border-radius:16px;padding:24px;width:300px;display:flex;flex-direction:column;gap:14px;box-shadow:0 24px 60px rgba(0,0,0,.5)">
+    <div style="font-weight:700;font-size:16px" id="senha-titulo">Senha</div>
+    <input type="password" id="senha-input" placeholder="Digite a senha" autocomplete="current-password"
+      style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px;color:var(--text);font-size:16px;outline:none;width:100%;box-sizing:border-box"
+      onkeydown="if(event.key==='Enter')confirmarSenha()">
+    <div id="senha-erro" style="color:#f55;font-size:12px;text-align:center;display:none">Senha incorreta. Tente novamente.</div>
+    <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text2);cursor:pointer;margin-top:-4px">
+      <input type="checkbox" id="senha-lembrar" style="width:15px;height:15px;cursor:pointer;accent-color:var(--blue)"> Salvar senha
+    </label>
+    <div style="display:flex;gap:8px">
+      <button onclick="fecharSenha()" style="flex:1;padding:12px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:14px;cursor:pointer">Cancelar</button>
+      <button onclick="confirmarSenha()" style="flex:1;padding:12px;border-radius:8px;border:none;background:var(--blue);color:#fff;font-size:14px;font-weight:600;cursor:pointer">Entrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- SHELL -->
+<div id="shell" style="display:none">
+  <div id="toast" class="toast"></div>
+
+  <!-- HEADER -->
+  <div id="header">
+    <div class="logo">
+      <div class="logo-mark">GHV</div>
+      <div>
+        <div class="logo-text" id="page-title">Dashboard</div>
+        <div class="logo-sub" id="user-role-label">Carregando...</div>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="hdr-icon" id="btn-theme" onclick="toggleTheme()" title="Alternar tema">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+      </button>
+      <button class="hdr-icon" id="btn-full" onclick="toggleFullscreen()" title="Tela cheia">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M8 3H5a2 2 0 00-2 2v3M21 8V5a2 2 0 00-2-2h-3M3 16v3a2 2 0 002 2h3M16 21h3a2 2 0 002-2v-3"/></svg>
+      </button>
+      <div class="avatar" id="user-avatar">--</div>
+    </div>
+  </div>
+
+  <!-- PAGES -->
+  <div id="pages">
+
+    <!-- DASHBOARD -->
+    <div class="page active" id="page-dash">
+      <div class="page-pad">
+        <div id="dash-alert" class="alert-bar" style="display:none">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          <div class="alert-text" id="dash-alert-text"></div>
+        </div>
+        <div class="stats-grid" id="dash-stats"></div>
+        <div class="section-title">Bobinas em estoque</div>
+        <div id="dash-bobinas"></div>
+      </div>
+    </div>
+
+    <!-- BOBINAS -->
+    <div class="page" id="page-bob">
+      <div class="page-pad">
+        <div class="section-header">
+          <div class="section-title" style="margin:0">Bobinas cadastradas</div>
+          <span id="bob-count" class="badge badge-blue">0</span>
+        </div>
+        <div id="bob-list"></div>
+      </div>
+      <button class="fab" id="fab-bob" onclick="abrirModalBobina()" style="display:none">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </button>
+    </div>
+
+    <!-- PRODUÇÃO -->
+    <div class="page" id="page-prod">
+      <div class="page-pad">
+        <div class="section-title">Ordens de corte</div>
+        <div id="prod-list"></div>
+      </div>
+      <button class="fab" id="fab-prod" onclick="abrirModalProducao()" style="display:none">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </button>
+    </div>
+
+    <!-- ESTOQUE PRODUTOS -->
+    <div class="page" id="page-estq">
+      <div class="page-pad">
+        <div class="section-title">Produtos disponíveis</div>
+        <div id="estq-list"></div>
+      </div>
+    </div>
+
+    <!-- PEDIDOS -->
+    <div class="page" id="page-ped">
+      <div class="page-pad">
+        <div class="section-title">Pedidos</div>
+        <div id="ped-list"></div>
+      </div>
+      <button class="fab" id="fab-ped" onclick="abrirModalPedido()" style="display:none">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </button>
+    </div>
+
+  </div><!-- /pages -->
+
+  <!-- BOTTOM NAV -->
+  <nav id="nav">
+    <button class="nav-btn active" data-page="dash" onclick="navTo('dash',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      <span>Início</span>
+    </button>
+    <button class="nav-btn" data-page="bob" onclick="navTo('bob',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg>
+      <span>Bobinas</span>
+    </button>
+    <button class="nav-btn" data-page="prod" onclick="navTo('prod',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93A10 10 0 0 0 4.93 19.07"/><path d="M4.93 4.93a10 10 0 0 1 14.14 14.14"/></svg>
+      <span>Produção</span>
+    </button>
+    <button class="nav-btn" data-page="estq" onclick="navTo('estq',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.45-6.89A2 2 0 0016.76 4H7.24a2 2 0 00-1.79 1.11z"/></svg>
+      <span>Estoque</span>
+    </button>
+    <button class="nav-btn" data-page="ped" onclick="navTo('ped',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+      <span>Pedidos</span>
+    </button>
+  </nav>
+
+  <!-- MODAL BOBINA -->
+  <div class="modal-overlay" id="modal-bob">
+    <div class="modal">
+      <div class="modal-handle"></div>
+      <div class="modal-title">Nova Bobina</div>
+      <div class="modal-sub">Registrar entrada de material</div>
+      <div class="form-group">
+        <label class="form-label">Lote da bobina</label>
+        <input class="form-input" id="mb-lote" placeholder="ex: LOT050002">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Material</label>
+        <select class="form-select" id="mb-mat" onchange="calcBobina()">
+          <option value="">Selecionar...</option>
+          <option value="MAT001" data-gram="40" data-larg="140">TNT 40g Branco</option>
+          <option value="MAT002" data-gram="50" data-larg="160">SMS 50g Azul</option>
+          <option value="MAT003" data-gram="48" data-larg="140">Laminado 48g Azul</option>
+          <option value="MAT004" data-gram="40" data-larg="140">TNT 40g Verde</option>
+          <option value="MAT005" data-gram="50" data-larg="160">SMS 50g Verde</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Peso (kg)</label>
+          <input class="form-input" id="mb-peso" type="number" step="0.1" placeholder="0.0" oninput="calcBobina()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Largura (cm)</label>
+          <input class="form-input" id="mb-larg" type="number" step="1" placeholder="160" oninput="calcBobina()">
+        </div>
+      </div>
+      <div class="form-calc" id="mb-calc" style="display:none">
+        <div class="calc-row"><span class="calc-label">Metro linear total</span><span class="calc-val" id="mb-metros">—</span></div>
+        <div class="calc-row"><span class="calc-label">Rendimento (m/kg)</span><span class="calc-val" id="mb-rend">—</span></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Fornecedor</label>
+        <input class="form-input" id="mb-forn" placeholder="Nome do fornecedor">
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-outline btn-sm" onclick="fecharModal('modal-bob')">Cancelar</button>
+        <button class="btn btn-primary" style="flex:1" onclick="salvarBobina()">Registrar Bobina</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL PRODUÇÃO -->
+  <div class="modal-overlay" id="modal-prod">
+    <div class="modal">
+      <div class="modal-handle"></div>
+      <div class="lote-display">
+        <div><div class="lote-label">Lote de produção gerado</div><div class="lote-code" id="mp-lote">GHV052026001</div></div>
+        <div class="badge badge-ok">Auto</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Bobina (lote)</label>
+        <select class="form-select" id="mp-bob" onchange="calcProducao()">
+          <option value="">Selecionar bobina...</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Produto</label>
+        <select class="form-select" id="mp-prod" onchange="calcProducao()">
+          <option value="">Selecionar produto...</option>
+          <option value="PRD001" data-m="1.40">Avental Cirúrgico P</option>
+          <option value="PRD002" data-m="1.60">Avental Cirúrgico M</option>
+          <option value="PRD003" data-m="1.75">Avental Cirúrgico G</option>
+          <option value="PRD004" data-m="1.90">Avental Cirúrgico GG</option>
+          <option value="PRD005" data-m="0.45">Campo Cirúrgico P</option>
+          <option value="PRD006" data-m="0.90">Campo Cirúrgico M</option>
+          <option value="PRD007" data-m="2.00">Campo Cirúrgico G</option>
+          <option value="PRD008" data-m="0.40">Invólucro P</option>
+          <option value="PRD009" data-m="0.60">Invólucro M</option>
+          <option value="PRD010" data-m="0.90">Invólucro G</option>
+          <option value="PRD011" data-m="9.00">Kit Parto Normal</option>
+          <option value="PRD012" data-m="13.50">Kit Cirúrgico Geral</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Quantidade planejada</label>
+        <input class="form-input" id="mp-qtd" type="number" step="1" placeholder="0" oninput="calcProducao()">
+      </div>
+      <div class="form-calc" id="mp-calc" style="display:none">
+        <div class="calc-row"><span class="calc-label">Metragem prevista</span><span class="calc-val" id="mp-prev">—</span></div>
+        <div class="calc-row"><span class="calc-label">Metros disponíveis</span><span class="calc-val" id="mp-disp">—</span></div>
+        <div class="calc-row"><span class="calc-label">Máximo de itens</span><span class="calc-val green" id="mp-max">—</span></div>
+      </div>
+      <div id="mp-fase2" style="display:none">
+        <div class="section-title">Após o corte — preencher depois</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Metragem real usada</label>
+            <input class="form-input" id="mp-real" type="number" step="0.1" placeholder="0.0" oninput="calcPerda()">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Qtd. produzida real</label>
+            <input class="form-input" id="mp-qtdreal" type="number" step="1" placeholder="0">
+          </div>
+        </div>
+        <div class="form-calc" id="mp-perda-calc" style="display:none">
+          <div class="calc-row"><span class="calc-label">Perda de material</span><span class="calc-val amber" id="mp-perda-m">—</span></div>
+          <div class="calc-row"><span class="calc-label">Perda %</span><span class="calc-val" id="mp-perda-pct">—</span></div>
+          <div class="calc-row"><span class="calc-label">Saldo após produção</span><span class="calc-val green" id="mp-saldo">—</span></div>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-outline btn-sm" onclick="fecharModal('modal-prod')">Cancelar</button>
+        <button class="btn btn-success" style="flex:1" onclick="salvarProducao()">Confirmar e gerar lote</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL PEDIDO -->
+  <div class="modal-overlay" id="modal-ped">
+    <div class="modal">
+      <div class="modal-handle"></div>
+      <div class="modal-title">Novo Pedido</div>
+      <div class="modal-sub">Registrar saída para cliente</div>
+      <div class="form-group">
+        <label class="form-label">Número do pedido</label>
+        <input class="form-input" id="mped-num" readonly>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Cliente</label>
+        <input class="form-input" id="mped-cli" placeholder="Nome do cliente / hospital">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Produto</label>
+        <select class="form-select" id="mped-prod" onchange="verificarSaldoPedido()">
+          <option value="">Selecionar produto...</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Quantidade</label>
+        <input class="form-input" id="mped-qtd" type="number" step="1" placeholder="0" oninput="verificarSaldoPedido()">
+      </div>
+      <div id="mped-saldo-info" class="form-calc" style="display:none">
+        <div class="calc-row"><span class="calc-label">Disponível em estoque</span><span class="calc-val" id="mped-disp">—</span></div>
+        <div class="calc-row"><span class="calc-label">Lote vinculado</span><span class="calc-val" id="mped-lote-vinc">—</span></div>
+        <div class="calc-row"><span class="calc-label">Status</span><span class="calc-val" id="mped-status-val">—</span></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Observação</label>
+        <input class="form-input" id="mped-obs" placeholder="Opcional">
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-outline btn-sm" onclick="fecharModal('modal-ped')">Cancelar</button>
+        <button class="btn btn-primary" style="flex:1" onclick="salvarPedido()">Fechar Pedido</button>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /shell -->
+
+<script>
+// ── ESTADO ─────────────────────────────────────────────────────────────────
+const state = {
+  user: null,
+  bobinas: [
+    {id:'BOB001',lote:'LOT040001',mat:'MAT001',nome:'TNT 40g Branco',pesoTotal:28,largura:140,gram:40,metros:500,saldoKg:28,metrosDisp:500,entrada:'12/05/2026',forn:'NT Brazil',status:'Ativo'},
+    {id:'BOB002',lote:'LOT050001',mat:'MAT002',nome:'SMS 50g Azul',pesoTotal:24,largura:160,gram:50,metros:300,saldoKg:4.2,metrosDisp:52.5,entrada:'12/05/2026',forn:'NT Brazil',status:'Ativo'},
+    {id:'BOB003',lote:'LOT048001',mat:'MAT003',nome:'Laminado 48g Azul',pesoTotal:20,largura:140,gram:48,metros:297.6,saldoKg:1.8,metrosDisp:22.5,entrada:'15/05/2026',forn:'HealthQuality',status:'Ativo'},
+    {id:'BOB004',lote:'LOT040002',mat:'MAT004',nome:'TNT 40g Verde',pesoTotal:28,largura:140,gram:40,metros:500,saldoKg:18.5,metrosDisp:330.4,entrada:'20/05/2026',forn:'NT Brazil',status:'Ativo'},
+  ],
+  estoqueMin: {MAT001:5,MAT002:8,MAT003:4,MAT004:3,MAT005:6},
+  producoes: [
+    {id:'ORD001',lote:'GHV052026001',bobId:'BOB002',bobLote:'LOT050001',prodId:'PRD003',prodNome:'Avental Cirúrgico G',qtdPlan:120,metPrev:210,metReal:218.4,qtdReal:120,perdaM:8.4,perdaPct:4.0,saldoApos:52.5,data:'27/05/2026 08:30',op:'Maria Santos'},
+    {id:'ORD002',lote:'GHV052026002',bobId:'BOB004',bobLote:'LOT040002',prodId:'PRD009',prodNome:'Invólucro M',qtdPlan:300,metPrev:180,metReal:185.2,qtdReal:298,perdaM:5.2,perdaPct:2.9,saldoApos:330.4,data:'26/05/2026 14:15',op:'Maria Santos'},
+  ],
+  estoqueProd: [
+    {id:'EP001',lote:'GHV052026001',prodId:'PRD003',nome:'Avental Cirúrgico G',qtdDisp:120,qtdOrig:120,data:'27/05/2026'},
+    {id:'EP002',lote:'GHV052026002',prodId:'PRD009',nome:'Invólucro M',qtdDisp:298,qtdOrig:298,data:'26/05/2026'},
+    {id:'EP003',lote:'GHV042026018',prodId:'PRD006',nome:'Campo Cirúrgico M',qtdDisp:22,qtdOrig:80,data:'15/04/2026'},
+  ],
+  pedidos: [
+    {id:'PED001',num:'PED-2026-001',cliente:'Hospital São Lucas',data:'25/05/2026',status:'Faturado',itens:[{prodNome:'Avental G',lote:'GHV042026010',qtd:60}]},
+    {id:'PED002',num:'PED-2026-002',cliente:'Clínica Ortopédica Sul',data:'27/05/2026',status:'Aberto',itens:[{prodNome:'Campo M',lote:'GHV052026002',qtd:20}]},
+  ],
+  proxLote: 3,
+  proxPedido: 3,
+};
+
+// ── SENHA ────────────────────────────────────────────────────────────────────
+var _loginPendente = null;
+function pedirSenha(perfil, nome, sigla, senhaCorreta) {
+  _loginPendente = {perfil, nome, sigla, senhaCorreta};
+  document.getElementById('senha-titulo').textContent = 'Entrar como ' + nome;
+  document.getElementById('senha-erro').style.display = 'none';
+  var saved = null;
+  try { saved = localStorage.getItem('ghv_pw_' + nome); } catch(e) {}
+  var inp = document.getElementById('senha-input');
+  var cb = document.getElementById('senha-lembrar');
+  inp.value = saved || '';
+  cb.checked = !!saved;
+  var m = document.getElementById('senha-modal');
+  m.style.display = 'flex';
+  setTimeout(function(){ inp.focus(); if(saved) inp.select(); }, 150);
+}
+function confirmarSenha() {
+  var val = document.getElementById('senha-input').value;
+  if (val === _loginPendente.senhaCorreta) {
+    try {
+      var cb = document.getElementById('senha-lembrar');
+      if (cb.checked) { localStorage.setItem('ghv_pw_' + _loginPendente.nome, val); }
+      else { localStorage.removeItem('ghv_pw_' + _loginPendente.nome); }
+    } catch(e) {}
+    var p = _loginPendente;
+    fecharSenha();
+    login(p.perfil, p.nome, p.sigla);
+  } else {
+    document.getElementById('senha-erro').style.display = 'block';
+    document.getElementById('senha-input').value = '';
+    document.getElementById('senha-input').focus();
+  }
+}
+function fecharSenha() {
+  document.getElementById('senha-modal').style.display = 'none';
+  _loginPendente = null;
+}
+
+// ── LOGIN ───────────────────────────────────────────────────────────────────
+function login(perfil, nome, sigla) {
+  state.user = {perfil, nome, sigla};
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('shell').style.display = '';
+  document.getElementById('user-role-label').textContent = perfil + ' · GHV Paramentação';
+
+  const ini = nome.split(' ').map(w=>w[0]).join('').slice(0,2);
+  document.getElementById('user-avatar').textContent = ini;
+
+  // Layout mobile e tema
+  detectLayout(nome);
+  var savedTheme = null;
+  try { savedTheme = localStorage.getItem('ghv_theme_' + nome); } catch(e) {}
+  if (savedTheme === 'light') document.documentElement.classList.add('light');
+  updateThemeIcon(document.documentElement.classList.contains('light'));
+
+  // FABs por perfil
+  if (perfil !== 'Visualizador') {
+    document.getElementById('fab-bob').style.display = 'flex';
+    document.getElementById('fab-prod').style.display = 'flex';
+    document.getElementById('fab-ped').style.display = 'flex';
+  }
+  renderDash(); renderBobinas(); renderProducao(); renderEstoque(); renderPedidos();
+  toast('Bem-vindo, ' + nome.split(' ')[0] + '!', 'success');
+}
+
+// ── NAV ─────────────────────────────────────────────────────────────────────
+const pageTitles = {dash:'Dashboard',bob:'Bobinas',prod:'Produção',estq:'Estoque',ped:'Pedidos'};
+function navTo(page, btn) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+page).classList.add('active');
+  btn.classList.add('active');
+  document.getElementById('page-title').textContent = pageTitles[page];
+}
+
+// ── TOAST ───────────────────────────────────────────────────────────────────
+function toast(msg, type='success') {
+  const t = document.getElementById('toast');
+  t.textContent = (type==='success'?'✓ ':'✗ ') + msg;
+  t.className = 'toast show ' + type;
+  setTimeout(()=>t.classList.remove('show'), 2800);
+}
+
+// ── HELPERS ─────────────────────────────────────────────────────────────────
+function calcMetros(pesoKg, largCm, gram) {
+  return pesoKg * 1000 / (gram * (largCm / 100));
+}
+function gerarLoteProducao() {
+  const d = new Date();
+  const mm = String(d.getMonth()+1).padStart(2,'0');
+  const yyyy = d.getFullYear();
+  const seq = String(state.proxLote).padStart(3,'0');
+  return `GHV${mm}${yyyy}${seq}`;
+}
+function alertaEstoque(bob) {
+  const min = state.estoqueMin[bob.mat] || 0;
+  return bob.saldoKg < min;
+}
+
+// ── DASHBOARD ───────────────────────────────────────────────────────────────
+function renderDash() {
+  const ativas = state.bobinas.filter(b=>b.status==='Ativo').length;
+  const baixas = state.bobinas.filter(b=>alertaEstoque(b)).length;
+  const d = new Date(); const mmyyyy = String(d.getMonth()+1).padStart(2,'0')+'/'+d.getFullYear();
+  const prodMes = state.producoes.filter(p=>p.data.includes('/05/2026')).length;
+  const pedAbertos = state.pedidos.filter(p=>p.status==='Aberto').length;
+
+  document.getElementById('dash-stats').innerHTML = `
+    <div class="stat-card blue"><div class="stat-val">${ativas}</div><div class="stat-label">Bobinas ativas</div></div>
+    <div class="stat-card ${baixas>0?'amber':'green'}"><div class="stat-val">${baixas}</div><div class="stat-label">Estoque baixo</div></div>
+    <div class="stat-card blue"><div class="stat-val">${prodMes}</div><div class="stat-label">Prod. este mês</div></div>
+    <div class="stat-card green"><div class="stat-val">${pedAbertos}</div><div class="stat-label">Pedidos abertos</div></div>
+  `;
+
+  if (baixas > 0) {
+    document.getElementById('dash-alert').style.display = 'flex';
+    document.getElementById('dash-alert-text').textContent = `${baixas} bobina${baixas>1?'s':''} abaixo do estoque mínimo. Verificar reposição.`;
+  }
+
+  const bobHtml = state.bobinas.map(b => {
+    const alerta = alertaEstoque(b);
+    const pct = Math.round((b.saldoKg/b.pesoTotal)*100);
+    const corBarra = alerta ? 'var(--amber)' : (pct>50?'var(--green)':'var(--blue)');
+    return `<div class="card-sm" onclick="navTo('bob',document.querySelector('[data-page=bob]'))">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <div>
+          <div style="font-size:13px;font-weight:500">${b.nome}</div>
+          <div style="font-size:10px;color:var(--text2);margin-top:1px;font-family:var(--mono)">Lote ${b.lote}</div>
+        </div>
+        <span class="badge ${alerta?'badge-warn':'badge-ok'}">${alerta?'⚠ Baixo':'✓ OK'}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text2);margin-bottom:4px">
+        <span>${b.saldoKg.toFixed(1)} kg restantes</span>
+        <span>${b.metrosDisp.toFixed(0)} m disponíveis</span>
+      </div>
+      <div class="prog-bar"><div class="prog-fill" style="width:${pct}%;background:${corBarra}"></div></div>
+    </div>`;
+  }).join('');
+  document.getElementById('dash-bobinas').innerHTML = bobHtml;
+}
+
+// ── BOBINAS ─────────────────────────────────────────────────────────────────
+function renderBobinas() {
+  document.getElementById('bob-count').textContent = state.bobinas.length;
+  const html = state.bobinas.map(b => {
+    const alerta = alertaEstoque(b);
+    const pct = Math.round((b.saldoKg/b.pesoTotal)*100);
+    return `<div class="card">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px">
+        <div>
+          <div style="font-size:14px;font-weight:600">${b.nome}</div>
+          <div style="font-size:11px;color:var(--accent);font-family:var(--mono);margin-top:3px">${b.lote}</div>
+        </div>
+        <span class="badge ${alerta?'badge-warn':'badge-ok'}">${alerta?'⚠ Baixo':'✓ OK'}</span>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px">
+        <div style="text-align:center;background:var(--surface2);border-radius:var(--r);padding:8px">
+          <div style="font-size:15px;font-weight:600;color:var(--blue2)">${b.saldoKg.toFixed(1)}</div>
+          <div style="font-size:9px;color:var(--text3)">kg saldo</div>
+        </div>
+        <div style="text-align:center;background:var(--surface2);border-radius:var(--r);padding:8px">
+          <div style="font-size:15px;font-weight:600;color:var(--blue2)">${b.metrosDisp.toFixed(0)}</div>
+          <div style="font-size:9px;color:var(--text3)">m dispon.</div>
+        </div>
+        <div style="text-align:center;background:var(--surface2);border-radius:var(--r);padding:8px">
+          <div style="font-size:15px;font-weight:600;color:var(--blue2)">${pct}%</div>
+          <div style="font-size:9px;color:var(--text3)">do total</div>
+        </div>
+      </div>
+      <div class="prog-bar" style="margin-bottom:10px"><div class="prog-fill" style="width:${pct}%;background:${alerta?'var(--amber)':pct>50?'var(--green)':'var(--blue)'}"></div></div>
+      <div style="font-size:10px;color:var(--text3);display:flex;justify-content:space-between">
+        <span>${b.gram}g/m² · ${b.largura}cm largura</span>
+        <span>Entrada: ${b.entrada}</span>
+      </div>
+    </div>`;
+  }).join('');
+  document.getElementById('bob-list').innerHTML = html;
+}
+
+// ── PRODUÇÃO ────────────────────────────────────────────────────────────────
+function renderProducao() {
+  const html = state.producoes.map(p => {
+    const corPerda = p.perdaPct > 10 ? 'var(--red)' : p.perdaPct > 5 ? 'var(--amber)' : 'var(--green)';
+    return `<div class="card">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px">
+        <div>
+          <div style="font-size:14px;font-weight:600">${p.prodNome}</div>
+          <div style="font-size:11px;color:var(--accent);font-family:var(--mono);margin-top:3px">${p.lote}</div>
+        </div>
+        <span class="badge badge-blue">${p.qtdReal} un.</span>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+        <div style="background:var(--surface2);border-radius:var(--r);padding:8px">
+          <div style="font-size:9px;color:var(--text3);margin-bottom:3px">Metragem usada</div>
+          <div style="font-size:13px;font-weight:600;font-family:var(--mono)">${p.metReal}m</div>
+          <div style="font-size:9px;color:var(--text2)">previsto: ${p.metPrev}m</div>
+        </div>
+        <div style="background:var(--surface2);border-radius:var(--r);padding:8px">
+          <div style="font-size:9px;color:var(--text3);margin-bottom:3px">Perda</div>
+          <div style="font-size:13px;font-weight:600;font-family:var(--mono);color:${corPerda}">${p.perdaPct.toFixed(1)}%</div>
+          <div style="font-size:9px;color:var(--text2)">${p.perdaM.toFixed(1)}m perdidos</div>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text3)">
+        <span>Bobina: ${p.bobLote}</span>
+        <span>${p.data} · ${p.op.split(' ')[0]}</span>
+      </div>
+    </div>`;
+  }).join('');
+  document.getElementById('prod-list').innerHTML = html || '<div style="text-align:center;color:var(--text3);padding:40px 0;font-size:13px">Nenhuma produção registrada</div>';
+}
+
+// ── ESTOQUE PRODUTOS ─────────────────────────────────────────────────────────
+function renderEstoque() {
+  const html = state.estoqueProd.map(e => {
+    const cor = e.qtdDisp < 30 ? 'amber' : 'ok';
+    return `<div class="card-sm">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+        <div>
+          <div style="font-size:13px;font-weight:500">${e.nome}</div>
+          <div style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-top:2px">${e.lote}</div>
+        </div>
+        <span class="badge badge-${cor}">${e.qtdDisp} un.</span>
+      </div>
+      <div style="font-size:10px;color:var(--text3)">Produzido em ${e.data} · ${e.qtdOrig} unidades originais</div>
+    </div>`;
+  }).join('');
+  document.getElementById('estq-list').innerHTML = html;
+}
+
+// ── PEDIDOS ──────────────────────────────────────────────────────────────────
+function renderPedidos() {
+  const html = state.pedidos.map(p => {
+    const sc = {Aberto:'blue',Faturado:'ok',Entregue:'ok',Cancelado:'err'}[p.status]||'gray';
+    return `<div class="card">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px">
+        <div>
+          <div style="font-size:14px;font-weight:600">${p.cliente}</div>
+          <div style="font-size:11px;color:var(--accent);font-family:var(--mono);margin-top:3px">${p.num}</div>
+        </div>
+        <span class="badge badge-${sc}">${p.status}</span>
+      </div>
+      ${p.itens.map(it=>`
+        <div style="background:var(--surface2);border-radius:var(--r);padding:8px 10px;margin-bottom:6px">
+          <div style="display:flex;justify-content:space-between;font-size:12px">
+            <span style="font-weight:500">${it.prodNome}</span>
+            <span style="color:var(--blue2);font-weight:600">${it.qtd} un.</span>
+          </div>
+          <div style="font-size:10px;color:var(--text3);margin-top:3px;font-family:var(--mono)">Lote: ${it.lote}</div>
+        </div>`).join('')}
+      <div style="font-size:10px;color:var(--text3);margin-top:4px">Data: ${p.data}</div>
+    </div>`;
+  }).join('');
+  document.getElementById('ped-list').innerHTML = html;
+}
+
+// ── MODAL BOBINA ─────────────────────────────────────────────────────────────
+function abrirModalBobina() {
+  document.getElementById('modal-bob').classList.add('open');
+  document.getElementById('mb-lote').value = '';
+  document.getElementById('mb-mat').value = '';
+  document.getElementById('mb-peso').value = '';
+  document.getElementById('mb-forn').value = '';
+  document.getElementById('mb-calc').style.display = 'none';
+}
+function calcBobina() {
+  const sel = document.getElementById('mb-mat');
+  const opt = sel.options[sel.selectedIndex];
+  const gram = parseFloat(opt.dataset.gram||0);
+  const largPad = parseFloat(opt.dataset.larg||0);
+  const peso = parseFloat(document.getElementById('mb-peso').value)||0;
+  const larg = parseFloat(document.getElementById('mb-larg').value)||largPad||0;
+  if (!document.getElementById('mb-larg').value && largPad) document.getElementById('mb-larg').value = largPad;
+  if (peso>0 && larg>0 && gram>0) {
+    const metros = calcMetros(peso, larg, gram);
+    const rend = metros/peso;
+    document.getElementById('mb-metros').textContent = metros.toFixed(1)+' m';
+    document.getElementById('mb-rend').textContent = rend.toFixed(1)+' m/kg';
+    document.getElementById('mb-calc').style.display = 'block';
+  }
+}
+function salvarBobina() {
+  const lote = document.getElementById('mb-lote').value.trim();
+  const matSel = document.getElementById('mb-mat');
+  const opt = matSel.options[matSel.selectedIndex];
+  const peso = parseFloat(document.getElementById('mb-peso').value)||0;
+  const larg = parseFloat(document.getElementById('mb-larg').value)||parseFloat(opt.dataset.larg)||0;
+  const gram = parseFloat(opt.dataset.gram)||0;
+  if (!lote || !matSel.value || peso<=0) { toast('Preencha lote, material e peso','error'); return; }
+  const metros = calcMetros(peso, larg, gram);
+  const nova = {
+    id:'BOB'+String(state.bobinas.length+1).padStart(3,'0'),
+    lote, mat:matSel.value, nome:opt.text,
+    pesoTotal:peso, largura:larg, gram,
+    metros:parseFloat(metros.toFixed(1)),
+    saldoKg:peso, metrosDisp:parseFloat(metros.toFixed(1)),
+    entrada:new Date().toLocaleDateString('pt-BR'),
+    forn:document.getElementById('mb-forn').value||'—',
+    status:'Ativo'
+  };
+  state.bobinas.push(nova);
+  fecharModal('modal-bob');
+  renderBobinas(); renderDash(); atualizarSelectsBobinas();
+  toast('Bobina '+lote+' registrada!');
+}
+
+// ── MODAL PRODUÇÃO ────────────────────────────────────────────────────────────
+function atualizarSelectsBobinas() {
+  const sel = document.getElementById('mp-bob');
+  sel.innerHTML = '<option value="">Selecionar bobina...</option>';
+  state.bobinas.filter(b=>b.status==='Ativo').forEach(b=>{
+    sel.innerHTML += `<option value="${b.id}" data-metros="${b.metrosDisp}">${b.lote} — ${b.nome} (${b.metrosDisp.toFixed(0)}m)</option>`;
+  });
+}
+function abrirModalProducao() {
+  atualizarSelectsBobinas();
+  const lote = gerarLoteProducao();
+  document.getElementById('mp-lote').textContent = lote;
+  document.getElementById('mp-bob').value = '';
+  document.getElementById('mp-prod').value = '';
+  document.getElementById('mp-qtd').value = '';
+  document.getElementById('mp-real').value = '';
+  document.getElementById('mp-qtdreal').value = '';
+  document.getElementById('mp-calc').style.display = 'none';
+  document.getElementById('mp-fase2').style.display = 'none';
+  document.getElementById('mp-perda-calc').style.display = 'none';
+  document.getElementById('modal-prod').classList.add('open');
+}
+function calcProducao() {
+  const bobSel = document.getElementById('mp-bob');
+  const prodSel = document.getElementById('mp-prod');
+  const qtd = parseFloat(document.getElementById('mp-qtd').value)||0;
+  const bobOpt = bobSel.options[bobSel.selectedIndex];
+  const prodOpt = prodSel.options[prodSel.selectedIndex];
+  const metrosDisp = parseFloat(bobOpt.dataset.metros||0);
+  const metPorItem = parseFloat(prodOpt.dataset.m||0);
+  if (metrosDisp>0 && metPorItem>0 && qtd>0) {
+    const prev = qtd * metPorItem;
+    const max = Math.floor(metrosDisp / metPorItem);
+    document.getElementById('mp-prev').textContent = prev.toFixed(1)+' m';
+    document.getElementById('mp-disp').textContent = metrosDisp.toFixed(0)+' m';
+    document.getElementById('mp-max').textContent = max+' un.';
+    document.getElementById('mp-calc').style.display = 'block';
+    document.getElementById('mp-fase2').style.display = 'block';
+    document.getElementById('mp-qtdreal').value = qtd;
+  }
+}
+function calcPerda() {
+  const prodSel = document.getElementById('mp-prod');
+  const prodOpt = prodSel.options[prodSel.selectedIndex];
+  const metPorItem = parseFloat(prodOpt.dataset.m||0);
+  const qtd = parseFloat(document.getElementById('mp-qtd').value)||0;
+  const real = parseFloat(document.getElementById('mp-real').value)||0;
+  const bobSel = document.getElementById('mp-bob');
+  const bobOpt = bobSel.options[bobSel.selectedIndex];
+  const disp = parseFloat(bobOpt.dataset.metros||0);
+  if (real>0 && qtd>0 && metPorItem>0) {
+    const prev = qtd * metPorItem;
+    const perdaM = real - prev;
+    const perdaPct = (perdaM / prev)*100;
+    const saldo = disp - real;
+    document.getElementById('mp-perda-m').textContent = perdaM.toFixed(1)+' m';
+    const pEl = document.getElementById('mp-perda-pct');
+    pEl.textContent = perdaPct.toFixed(1)+'%';
+    pEl.className = 'calc-val '+(perdaPct>10?'red':perdaPct>5?'amber':'green');
+    document.getElementById('mp-saldo').textContent = saldo.toFixed(1)+' m';
+    document.getElementById('mp-perda-calc').style.display = 'block';
+  }
+}
+function salvarProducao() {
+  const lote = document.getElementById('mp-lote').textContent;
+  const bobSel = document.getElementById('mp-bob');
+  const prodSel = document.getElementById('mp-prod');
+  const bobOpt = bobSel.options[bobSel.selectedIndex];
+  const prodOpt = prodSel.options[prodSel.selectedIndex];
+  const qtd = parseFloat(document.getElementById('mp-qtd').value)||0;
+  const metPorItem = parseFloat(prodOpt.dataset.m||0);
+  if (!bobSel.value || !prodSel.value || qtd<=0) { toast('Preencha todos os campos','error'); return; }
+  const real = parseFloat(document.getElementById('mp-real').value)||qtd*metPorItem;
+  const qtdReal = parseFloat(document.getElementById('mp-qtdreal').value)||qtd;
+  const prev = qtd*metPorItem;
+  const perdaM = real-prev;
+  const perdaPct = (perdaM/prev)*100;
+  const bob = state.bobinas.find(b=>b.id===bobSel.value);
+  const saldoApos = bob.metrosDisp - real;
+  bob.metrosDisp = parseFloat(saldoApos.toFixed(1));
+  bob.saldoKg = parseFloat((saldoApos*(bob.gram*(bob.largura/100)/1000)).toFixed(2));
+  const nova = {
+    id:'ORD'+String(state.producoes.length+1).padStart(3,'0'),
+    lote, bobId:bob.id, bobLote:bob.lote,
+    prodId:prodSel.value, prodNome:prodOpt.text,
+    qtdPlan:qtd, metPrev:prev, metReal:real,
+    qtdReal, perdaM:parseFloat(perdaM.toFixed(1)), perdaPct:parseFloat(perdaPct.toFixed(1)),
+    saldoApos, data:new Date().toLocaleString('pt-BR').slice(0,16),
+    op:state.user.nome
+  };
+  state.producoes.unshift(nova);
+  const epExist = state.estoqueProd.find(e=>e.prodId===prodSel.value);
+  if (epExist) { epExist.qtdDisp += qtdReal; epExist.qtdOrig += qtdReal; }
+  else state.estoqueProd.push({id:'EP'+Date.now(),lote,prodId:prodSel.value,nome:prodOpt.text,qtdDisp:qtdReal,qtdOrig:qtdReal,data:new Date().toLocaleDateString('pt-BR')});
+  state.proxLote++;
+  fecharModal('modal-prod');
+  renderProducao(); renderEstoque(); renderBobinas(); renderDash();
+  toast('Lote '+lote+' gerado!');
+}
+
+// ── MODAL PEDIDO ─────────────────────────────────────────────────────────────
+function abrirModalPedido() {
+  const num = 'PED-'+new Date().getFullYear()+'-'+String(state.proxPedido).padStart(3,'0');
+  document.getElementById('mped-num').value = num;
+  document.getElementById('mped-cli').value = '';
+  document.getElementById('mped-qtd').value = '';
+  document.getElementById('mped-obs').value = '';
+  const sel = document.getElementById('mped-prod');
+  sel.innerHTML = '<option value="">Selecionar produto...</option>';
+  state.estoqueProd.forEach(e=>{
+    sel.innerHTML += `<option value="${e.prodId}" data-lote="${e.lote}" data-disp="${e.qtdDisp}">${e.nome} (${e.qtdDisp} disp.)</option>`;
+  });
+  document.getElementById('mped-saldo-info').style.display = 'none';
+  document.getElementById('modal-ped').classList.add('open');
+}
+function verificarSaldoPedido() {
+  const sel = document.getElementById('mped-prod');
+  const opt = sel.options[sel.selectedIndex];
+  const disp = parseFloat(opt.dataset.disp||0);
+  const lote = opt.dataset.lote||'—';
+  const qtd = parseFloat(document.getElementById('mped-qtd').value)||0;
+  if (sel.value && qtd>0) {
+    const ok = qtd <= disp;
+    document.getElementById('mped-disp').textContent = disp+' un.';
+    document.getElementById('mped-lote-vinc').textContent = lote;
+    const sv = document.getElementById('mped-status-val');
+    sv.textContent = ok ? '✓ Saldo suficiente' : '⚠ Sem saldo';
+    sv.className = 'calc-val '+(ok?'green':'red');
+    document.getElementById('mped-saldo-info').style.display = 'block';
+  }
+}
+function salvarPedido() {
+  const cli = document.getElementById('mped-cli').value.trim();
+  const prodSel = document.getElementById('mped-prod');
+  const prodOpt = prodSel.options[prodSel.selectedIndex];
+  const qtd = parseFloat(document.getElementById('mped-qtd').value)||0;
+  const num = document.getElementById('mped-num').value;
+  if (!cli || !prodSel.value || qtd<=0) { toast('Preencha cliente, produto e quantidade','error'); return; }
+  const disp = parseFloat(prodOpt.dataset.disp||0);
+  if (qtd > disp) { toast('Saldo insuficiente em estoque','error'); return; }
+  const ep = state.estoqueProd.find(e=>e.prodId===prodSel.value);
+  if (ep) ep.qtdDisp -= qtd;
+  state.pedidos.unshift({
+    id:'PED'+Date.now(), num, cliente:cli,
+    data:new Date().toLocaleDateString('pt-BR'),
+    status:'Aberto',
+    itens:[{prodNome:prodOpt.text, lote:prodOpt.dataset.lote, qtd}]
+  });
+  state.proxPedido++;
+  fecharModal('modal-ped');
+  renderPedidos(); renderEstoque(); renderDash();
+  toast('Pedido '+num+' criado!');
+}
+
+// ── UTILS ────────────────────────────────────────────────────────────────────
+function fecharModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+document.querySelectorAll('.modal-overlay').forEach(m=>{
+  m.addEventListener('click', e=>{ if(e.target===m) m.classList.remove('open'); });
+});
+
+// ── LAYOUT MOBILE ────────────────────────────────────────────────────────────
+function detectLayout(userName) {
+  // Layout agora é 100% responsivo via CSS @media (max-width:600px).
+  // Ajusta sozinho ao redimensionar/rotacionar. Mantido como no-op.
+}
+
+// ── FULLSCREEN ───────────────────────────────────────────────────────────────
+function toggleFullscreen() {
+  var el = document.documentElement;
+  if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+    var req = el.requestFullscreen || el.webkitRequestFullscreen;
+    if (req) req.call(el).catch(function() { toast('Tela cheia não disponível', 'error'); });
+  } else {
+    var ex = document.exitFullscreen || document.webkitExitFullscreen;
+    if (ex) ex.call(document);
+  }
+}
+function _updateFullBtn(isFs) {
+  var btn = document.getElementById('btn-full');
+  if (!btn) return;
+  btn.innerHTML = isFs
+    ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3v3a2 2 0 01-2 2H3M21 8h-3a2 2 0 01-2-2V3M3 16h3a2 2 0 012 2v3M16 21v-3a2 2 0 012-2h3"/></svg>'
+    : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 00-2 2v3M21 8V5a2 2 0 00-2-2h-3M3 16v3a2 2 0 002 2h3M16 21h3a2 2 0 002-2v-3"/></svg>';
+}
+document.addEventListener('fullscreenchange', function() { _updateFullBtn(!!document.fullscreenElement); });
+document.addEventListener('webkitfullscreenchange', function() { _updateFullBtn(!!document.webkitFullscreenElement); });
+
+// ── TEMA CLARO / ESCURO ───────────────────────────────────────────────────────
+function toggleTheme() {
+  var isLight = document.documentElement.classList.toggle('light');
+  try {
+    if (state.user) localStorage.setItem('ghv_theme_' + state.user.nome, isLight ? 'light' : 'dark');
+  } catch(e) {}
+  updateThemeIcon(isLight);
+}
+function updateThemeIcon(isLight) {
+  var btn = document.getElementById('btn-theme');
+  if (!btn) return;
+  btn.innerHTML = isLight
+    ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>'
+    : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>';
+}
+</script>
+<script>
+// Registro do Service Worker (PWA) — só funciona via HTTPS (GitHub Pages)
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function () {
+    navigator.serviceWorker.register('service-worker.js').catch(function (e) {
+      console.log('SW falhou:', e);
+    });
+  });
+}
+</script>
+</body>
+</html>
