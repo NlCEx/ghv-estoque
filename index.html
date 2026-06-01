@@ -350,6 +350,9 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
       <button class="hdr-icon" id="btn-cat" onclick="abrirCatalogo()" title="Catálogos (materiais e produtos)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 7h16M4 12h16M4 17h10"/><circle cx="19" cy="17" r="2"/></svg>
       </button>
+      <button class="hdr-icon" id="btn-hist" onclick="abrirHistorico()" title="Histórico de movimentações">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+      </button>
       <div class="avatar" id="user-avatar">--</div>
     </div>
   </div>
@@ -383,6 +386,23 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
           <button class="btn btn-primary btn-sm" onclick="abrirModalProduto()">+ Produto</button>
         </div>
         <div id="cat-produtos"></div>
+      </div>
+    </div>
+
+    <!-- HISTÓRICO -->
+    <div class="page" id="page-hist">
+      <div class="page-pad">
+        <div class="stats-grid" id="hist-stats"></div>
+        <div class="section-header">
+          <div class="section-title" style="margin:0">Movimentações</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap" id="hist-filtros">
+            <button class="btn btn-sm btn-primary" onclick="filtrarHist('Tudo',this)">Tudo</button>
+            <button class="btn btn-sm btn-outline" onclick="filtrarHist('Entrada',this)">Entradas</button>
+            <button class="btn btn-sm btn-outline" onclick="filtrarHist('Produção',this)">Produção</button>
+            <button class="btn btn-sm btn-outline" onclick="filtrarHist('Saída',this)">Saídas</button>
+          </div>
+        </div>
+        <div id="hist-lista"></div>
       </div>
     </div>
 
@@ -672,8 +692,8 @@ const state = {
     {id:'EP003',lote:'GHV042026018',prodId:'PRD006',nome:'Campo Cirúrgico M',qtdDisp:22,qtdOrig:80,data:'15/04/2026'},
   ],
   pedidos: [
-    {id:'PED001',num:'PED-2026-001',cliente:'Hospital São Lucas',data:'25/05/2026',status:'Faturado',itens:[{prodNome:'Avental G',lote:'GHV042026010',qtd:60}]},
-    {id:'PED002',num:'PED-2026-002',cliente:'Clínica Ortopédica Sul',data:'27/05/2026',status:'Aberto',itens:[{prodNome:'Campo M',lote:'GHV052026002',qtd:20}]},
+    {id:'PED001',num:'Pedido 1',cliente:'',data:'25/05/2026',status:'Atendido',atendido:60,produzindo:0,pendente:0,itens:[{prodNome:'Avental G',lote:'GHV042026010',qtd:60}]},
+    {id:'PED002',num:'Pedido 2',cliente:'',data:'27/05/2026',status:'Atendido',atendido:20,produzindo:0,pendente:0,itens:[{prodNome:'Campo M',lote:'GHV052026002',qtd:20}]},
   ],
   proxLote: 3,
   proxPedido: 3,
@@ -699,7 +719,23 @@ const state = {
     {id:'PRD011', nome:'Kit Parto Normal',     metros:9.00},
     {id:'PRD012', nome:'Kit Cirúrgico Geral',  metros:13.50},
   ],
+  historico: [
+    {id:'H1', data:'27/05/2026 08:30', tipo:'Produção', item:'Avental Cirúrgico G', qtd:120, un:'un', ref:'GHV052026001', quem:'Maria'},
+    {id:'H2', data:'26/05/2026 14:15', tipo:'Produção', item:'Invólucro M', qtd:298, un:'un', ref:'GHV052026002', quem:'Maria'},
+    {id:'H3', data:'25/05/2026 10:00', tipo:'Saída', item:'Avental G', qtd:60, un:'un', ref:'Pedido 1', quem:'GHV'},
+    {id:'H4', data:'20/05/2026 09:00', tipo:'Entrada', item:'TNT 40g Verde', qtd:28, un:'kg', ref:'LOT040002', quem:'GHV'},
+    {id:'H5', data:'15/05/2026 11:30', tipo:'Entrada', item:'Laminado 48g Azul', qtd:20, un:'kg', ref:'LOT048001', quem:'GHV'},
+  ],
 };
+// Registra uma movimentação no histórico (sempre com data/hora e quem fez)
+function registrar(tipo, item, qtd, un, ref) {
+  state.historico.unshift({
+    id:'H'+Date.now(),
+    data:new Date().toLocaleString('pt-BR').slice(0,16),
+    tipo:tipo, item:item, qtd:qtd, un:un||'un', ref:ref||'—',
+    quem:(state.user && state.user.nome) || '—'
+  });
+}
 // Permissão: só GHV pode excluir
 function podeExcluir(){ return state.user && state.user.nome === 'GHV'; }
 function proxId(prefixo, lista){
@@ -879,6 +915,51 @@ function popularProdutos() {
   sel.innerHTML = '<option value="">Selecionar produto...</option>' + state.produtos.map(function(p){
     return '<option value="'+p.id+'" data-m="'+p.metros+'">'+p.nome+'</option>';
   }).join('');
+}
+
+// ── HISTÓRICO ────────────────────────────────────────────────────────────────
+var _histFiltro = 'Tudo';
+function abrirHistorico() {
+  document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active')});
+  document.querySelectorAll('.nav-btn').forEach(function(b){b.classList.remove('active')});
+  document.getElementById('page-hist').classList.add('active');
+  document.getElementById('page-title').textContent = 'Histórico';
+  _histFiltro = 'Tudo';
+  var fb = document.querySelectorAll('#hist-filtros button');
+  fb.forEach(function(b,i){ b.className = 'btn btn-sm ' + (i===0?'btn-primary':'btn-outline'); });
+  renderHistorico();
+}
+function filtrarHist(tipo, btn) {
+  _histFiltro = tipo;
+  document.querySelectorAll('#hist-filtros button').forEach(function(b){ b.className='btn btn-sm btn-outline'; });
+  if (btn) btn.className = 'btn btn-sm btn-primary';
+  renderHistorico();
+}
+function renderHistorico() {
+  var ent=0, prod=0, sai=0;
+  state.historico.forEach(function(h){
+    if (h.tipo==='Entrada') ent+=h.qtd;
+    else if (h.tipo==='Produção') prod+=h.qtd;
+    else if (h.tipo==='Saída') sai+=h.qtd;
+  });
+  document.getElementById('hist-stats').innerHTML =
+     '<div class="stat-card green"><div class="stat-val">'+ent+'</div><div class="stat-label">Entradas (kg)</div></div>'
+    +'<div class="stat-card blue"><div class="stat-val">'+prod+'</div><div class="stat-label">Produção (un)</div></div>'
+    +'<div class="stat-card amber"><div class="stat-val">'+sai+'</div><div class="stat-label">Saídas (un)</div></div>';
+  var icone = {Entrada:'📥', 'Produção':'🏭', 'Saída':'📤', Reserva:'🔒'};
+  var cor = {Entrada:'var(--green)', 'Produção':'var(--blue2)', 'Saída':'var(--amber)', Reserva:'var(--text2)'};
+  var sinal = {Entrada:'+', 'Produção':'+', 'Saída':'−', Reserva:''};
+  var lista = state.historico.filter(function(h){ return _histFiltro==='Tudo' || h.tipo===_histFiltro; });
+  document.getElementById('hist-lista').innerHTML = lista.map(function(h){
+    return '<div class="card-sm" style="display:flex;align-items:center;gap:12px">'
+      + '<div style="font-size:18px;flex-shrink:0">'+(icone[h.tipo]||'•')+'</div>'
+      + '<div style="flex:1;min-width:0">'
+      +   '<div style="font-size:13px;font-weight:500">'+h.item+'</div>'
+      +   '<div style="font-size:10px;color:var(--text2);margin-top:2px">'+h.data+' · '+h.quem+' · '+h.ref+'</div>'
+      + '</div>'
+      + '<div style="font-weight:600;font-size:13px;flex-shrink:0;color:'+(cor[h.tipo]||'var(--text)')+'">'+(sinal[h.tipo]||'')+h.qtd+' '+h.un+'</div>'
+      + '</div>';
+  }).join('') || '<div style="color:var(--text3);font-size:12px;padding:8px 0">Nenhuma movimentação neste filtro.</div>';
 }
 
 // ── TOAST ───────────────────────────────────────────────────────────────────
@@ -1065,8 +1146,8 @@ function renderPedidos() {
     return `<div class="card">
       <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px">
         <div>
-          <div style="font-size:14px;font-weight:600">${p.cliente}</div>
-          <div style="font-size:11px;color:var(--accent);font-family:var(--mono);margin-top:3px">${p.num}</div>
+          <div style="font-size:14px;font-weight:600">${p.num}</div>
+          <div style="font-size:11px;color:var(--text2);margin-top:3px">Solicitado em ${p.data}${p.cliente?' · '+p.cliente:''}</div>
         </div>
         <span class="badge badge-${sc}">${p.status}</span>
       </div>
@@ -1131,6 +1212,7 @@ function salvarBobina() {
     status:'Ativo'
   };
   state.bobinas.push(nova);
+  registrar('Entrada', nova.nome, nova.pesoTotal, 'kg', nova.lote);
   fecharModal('modal-bob');
   renderBobinas(); renderDash(); atualizarSelectsBobinas();
   toast('Bobina '+lote+' registrada!');
@@ -1206,6 +1288,7 @@ function abrirOrdem() {
     status:'Aberta'
   });
   state.proxLote++;
+  registrar('Reserva', prodOpt.text, parseFloat(prev.toFixed(1)), 'm', bob.lote);
   fecharModal('modal-prod');
   renderProducao(); renderBobinas(); renderDash();
   toast('Ordem '+lote+' aberta — material reservado');
@@ -1252,6 +1335,7 @@ function salvarConclusao() {
   const ep = state.estoqueProd.find(e=>e.prodId===o.prodId);
   if (ep) { ep.qtdDisp += qtdReal; ep.qtdOrig += qtdReal; }
   else state.estoqueProd.push({id:'EP'+Date.now(),lote:o.lote,prodId:o.prodId,nome:o.prodNome,qtdDisp:qtdReal,qtdOrig:qtdReal,data:new Date().toLocaleDateString('pt-BR')});
+  registrar('Produção', o.prodNome, qtdReal, 'un', o.lote);
   _ordemConcluindo = null;
   fecharModal('modal-concluir');
   renderProducao(); renderEstoque(); renderBobinas(); renderDash();
@@ -1267,7 +1351,7 @@ function cancelarOrdem(id) {
 
 // ── MODAL PEDIDO ─────────────────────────────────────────────────────────────
 function abrirModalPedido() {
-  const num = 'PED-'+new Date().getFullYear()+'-'+String(state.proxPedido).padStart(3,'0');
+  const num = 'Pedido ' + state.proxPedido;
   document.getElementById('mped-num').value = num;
   document.getElementById('mped-cli').value = '';
   document.getElementById('mped-qtd').value = '';
@@ -1320,11 +1404,11 @@ function aceitarPedido() {
   const sel = document.getElementById('mped-prod');
   const qtd = parseFloat(document.getElementById('mped-qtd').value)||0;
   const num = document.getElementById('mped-num').value;
-  if (!cli || !sel.value || qtd<=0) { toast('Preencha cliente, produto e quantidade','error'); return; }
+  if (!sel.value || qtd<=0) { toast('Selecione produto e quantidade','error'); return; }
   const v = calcViabilidadePedido(sel.value, qtd);
   const prodNome = (state.produtos.find(p=>p.id===sel.value)||{}).nome || sel.options[sel.selectedIndex].text;
   // 1) baixa do estoque a parte que já está pronta
-  if (v.atende>0) { const ep = state.estoqueProd.find(e=>e.prodId===sel.value); if(ep) ep.qtdDisp -= v.atende; }
+  if (v.atende>0) { const ep = state.estoqueProd.find(e=>e.prodId===sel.value); if(ep) ep.qtdDisp -= v.atende; registrar('Saída', prodNome, v.atende, 'un', num); }
   // 2) abre ordem de produção automática para o que dá para produzir
   if (v.produzir>0 && v.melhorBob) {
     const ol = gerarLoteProducao();
@@ -1336,6 +1420,7 @@ function aceitarPedido() {
       status:'Aberta', pedidoNum:num
     });
     state.proxLote++;
+    registrar('Reserva', prodNome, v.produzir, 'un', ol);
   }
   // 3) status do pedido conforme o resultado
   const status = v.pendente>0 ? 'Parcial' : (v.produzir>0 ? 'Em produção' : 'Atendido');
