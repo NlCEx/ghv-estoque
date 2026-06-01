@@ -769,6 +769,7 @@ function registrar(tipo, item, qtd, un, ref) {
     tipo:tipo, item:item, qtd:qtd, un:un||'un', ref:ref||'—',
     quem:(state.user && state.user.nome) || '—'
   });
+  if (state.historico.length > 500) state.historico.length = 500;
   salvarNuvem();
 }
 // Permissão: só GHV pode excluir
@@ -816,6 +817,22 @@ function carregarNuvem(cb){
   s.src = API_URL + '?callback=_ghvCarregou&t=' + Date.now();
   s.onerror = function(){ if(cb) cb(); };
   document.body.appendChild(s);
+}
+// Sincroniza com a nuvem a cada 25s (só quando ocioso, sem janela aberta) — reduz divergência entre usuários
+var _pollTimer = null;
+function iniciarPolling(){
+  if (_pollTimer) return;
+  _pollTimer = setInterval(function(){
+    if (!state.user) return;
+    if (document.querySelector('.modal-overlay.open')) return;
+    var sm = document.getElementById('senha-modal');
+    if (sm && sm.style.display === 'flex') return;
+    carregarNuvem(function(){
+      renderDash(); renderBobinas(); renderProducao(); renderEstoque(); renderPedidos();
+      var h = document.getElementById('page-hist'); if (h && h.classList.contains('active')) renderHistorico();
+      var c = document.getElementById('page-cat'); if (c && c.classList.contains('active')) renderCatalogo();
+    });
+  }, 25000);
 }
 
 // ── SENHA ────────────────────────────────────────────────────────────────────
@@ -882,6 +899,7 @@ function login(perfil, nome, sigla) {
   renderDash(); renderBobinas(); renderProducao(); renderEstoque(); renderPedidos();
   toast('Bem-vindo, ' + nome.split(' ')[0] + '!', 'success');
   carregarNuvem(function(){ renderDash(); renderBobinas(); renderProducao(); renderEstoque(); renderPedidos(); renderCatalogo(); });
+  iniciarPolling();
 }
 
 // ── NAV ─────────────────────────────────────────────────────────────────────
@@ -1075,8 +1093,9 @@ function renderDash() {
   const ativas = state.bobinas.filter(b=>b.status==='Ativo').length;
   const baixas = state.bobinas.filter(b=>alertaEstoque(b)).length;
   const d = new Date(); const mmyyyy = String(d.getMonth()+1).padStart(2,'0')+'/'+d.getFullYear();
-  const prodMes = state.producoes.filter(p=>p.data.includes('/05/2026')).length;
-  const pedAbertos = state.pedidos.filter(p=>p.status==='Aberto').length;
+  var _h = new Date(); var _refMes = '/' + String(_h.getMonth()+1).padStart(2,'0') + '/' + _h.getFullYear();
+  const prodMes = state.producoes.filter(function(p){ return p.status==='Concluída' && (p.data||'').indexOf(_refMes)!==-1; }).length;
+  const pedAbertos = state.pedidos.filter(function(p){ return p.status==='Em produção' || p.status==='Parcial'; }).length;
 
   document.getElementById('dash-stats').innerHTML = `
     <div class="stat-card blue"><div class="stat-val">${ativas}</div><div class="stat-label">Bobinas ativas</div></div>
@@ -1146,6 +1165,7 @@ function renderBobinas() {
         <span>${b.gram}g/m² · ${b.largura}cm largura</span>
         <span>Entrada: ${b.entrada}</span>
       </div>
+      ${podeExcluir()?`<button class="btn btn-danger btn-sm" style="margin-top:10px" onclick="excluirBobina('${b.id}')">Excluir</button>`:''}
     </div>`;
   }).join('');
   document.getElementById('bob-list').innerHTML = html;
@@ -1195,6 +1215,7 @@ function renderProducao() {
         <span>Bobina: ${p.bobLote}</span>
         <span>${p.data} · ${p.op.split(' ')[0]}</span>
       </div>
+      ${podeExcluir()?`<button class="btn btn-danger btn-sm" style="margin-top:10px" onclick="excluirProducao('${p.id}')">Excluir</button>`:''}
     </div>`;
   }).join('');
   document.getElementById('prod-list').innerHTML = html || '<div style="text-align:center;color:var(--text3);padding:40px 0;font-size:13px">Nenhuma produção registrada</div>';
@@ -1245,6 +1266,7 @@ function renderPedidos() {
           <div style="font-size:10px;color:var(--text3);margin-top:3px;font-family:var(--mono)">Lote: ${it.lote}</div>
         </div>`).join('')}
       <div style="font-size:10px;color:var(--text3);margin-top:4px">Data: ${p.data}</div>
+      ${podeExcluir()?`<button class="btn btn-danger btn-sm" style="margin-top:10px" onclick="excluirPedido('${p.id}')">Excluir</button>`:''}
     </div>`;
   }).join('');
   document.getElementById('ped-list').innerHTML = html;
@@ -1419,6 +1441,7 @@ function salvarConclusao() {
   const ep = state.estoqueProd.find(e=>e.prodId===o.prodId);
   if (ep) { ep.qtdDisp += qtdReal; ep.qtdOrig += qtdReal; }
   else state.estoqueProd.push({id:'EP'+Date.now(),lote:o.lote,prodId:o.prodId,nome:o.prodNome,qtdDisp:qtdReal,qtdOrig:qtdReal,data:new Date().toLocaleDateString('pt-BR')});
+  fecharPedidoDaOrdem(o);
   registrar('Produção', o.prodNome, qtdReal, 'un', o.lote);
   _ordemConcluindo = null;
   fecharModal('modal-concluir');
@@ -1431,6 +1454,39 @@ function cancelarOrdem(id) {
   state.producoes = state.producoes.filter(x=>x.id!==id);
   renderProducao(); renderBobinas(); renderDash(); salvarNuvem();
   toast('Ordem cancelada — reserva liberada');
+}
+// Quando uma ordem ligada a um pedido conclui, abate o pedido (e tenta cobrir o pendente com o estoque)
+function fecharPedidoDaOrdem(o){
+  if(!o.pedidoNum) return;
+  var ped = state.pedidos.find(function(p){return p.num===o.pedidoNum;});
+  if(!ped || ped.status==='Atendido') return;
+  var ep = state.estoqueProd.find(function(e){return e.prodId===o.prodId;});
+  var disp = ep ? ep.qtdDisp : 0;
+  var faltava = (ped.produzindo||0) + (ped.pendente||0);
+  var entregue = Math.min(faltava, disp);
+  if(entregue>0 && ep){ ep.qtdDisp -= entregue; ped.atendido = (ped.atendido||0) + entregue; }
+  var pz = ped.produzindo||0, pd = ped.pendente||0, e = entregue;
+  var usaPz = Math.min(pz, e); pz -= usaPz; e -= usaPz;
+  var usaPd = Math.min(pd, e); pd -= usaPd;
+  ped.produzindo = pz; ped.pendente = pd;
+  ped.status = pd>0 ? 'Parcial' : (pz>0 ? 'Em produção' : 'Atendido');
+}
+// Exclusões (somente GHV)
+function excluirBobina(id){
+  if(!podeExcluir()){ toast('Apenas o GHV pode excluir','error'); return; }
+  if(metrosReservados(id)>0){ toast('Esta bobina tem material reservado em produção','error'); return; }
+  state.bobinas = state.bobinas.filter(function(b){return b.id!==id;});
+  renderBobinas(); renderDash(); salvarNuvem(); toast('Bobina excluída');
+}
+function excluirProducao(id){
+  if(!podeExcluir()){ toast('Apenas o GHV pode excluir','error'); return; }
+  state.producoes = state.producoes.filter(function(p){return p.id!==id;});
+  renderProducao(); renderDash(); salvarNuvem(); toast('Registro de produção excluído');
+}
+function excluirPedido(id){
+  if(!podeExcluir()){ toast('Apenas o GHV pode excluir','error'); return; }
+  state.pedidos = state.pedidos.filter(function(p){return p.id!==id;});
+  renderPedidos(); renderDash(); salvarNuvem(); toast('Pedido excluído');
 }
 
 // ── MODAL PEDIDO ─────────────────────────────────────────────────────────────
@@ -1456,15 +1512,12 @@ function calcViabilidadePedido(prodId, qtd) {
   const estoquePronto = ep ? ep.qtdDisp : 0;
   const atende = Math.min(qtd, estoquePronto);
   const falta = qtd - atende;
-  let melhorBob = null, maxLivres = 0;
-  state.bobinas.filter(b=>b.status==='Ativo').forEach(function(b){
-    const l = metrosLivres(b);
-    if (l > maxLivres) { maxLivres = l; melhorBob = b; }
-  });
-  const maxProd = (metrosUn>0 && melhorBob) ? Math.floor(maxLivres / metrosUn) : 0;
+  var totalLivre = 0;
+  state.bobinas.filter(b=>b.status==='Ativo').forEach(function(b){ totalLivre += metrosLivres(b); });
+  const maxProd = (metrosUn>0) ? Math.floor(totalLivre / metrosUn) : 0;
   const produzir = Math.min(falta, maxProd);
   const pendente = falta - produzir;
-  return {metrosUn, estoquePronto, atende, falta, melhorBob, maxLivres, produzir, pendente};
+  return {metrosUn, estoquePronto, atende, falta, totalLivre, maxProd, produzir, pendente};
 }
 function _linhaCalc(label, val, cor) {
   return '<div class="calc-row"><span class="calc-label">'+label+'</span><span class="calc-val '+(cor||'')+'">'+val+'</span></div>';
@@ -1476,7 +1529,7 @@ function analisarPedido() {
   if (!sel.value || qtd<=0) { box.style.display='none'; return; }
   const v = calcViabilidadePedido(sel.value, qtd);
   let html = _linhaCalc('Atende do estoque agora', v.atende+' un.', 'green');
-  if (v.produzir>0) html += _linhaCalc('Produzir (reserva '+(v.melhorBob?v.melhorBob.lote:'')+')', v.produzir+' un.', 'blue');
+  if (v.produzir>0) html += _linhaCalc('Produzir (reserva material)', v.produzir+' un.', 'blue');
   if (v.pendente>0) html += _linhaCalc('Pendente — falta material', v.pendente+' un.', 'red');
   const st = v.pendente>0 ? '⚠ Parcial' : (v.produzir>0 ? '🏭 Vai p/ produção' : '✓ Atende do estoque');
   html += _linhaCalc('Resultado', st, v.pendente>0?'amber':'green');
@@ -1494,17 +1547,26 @@ function aceitarPedido() {
   // 1) baixa do estoque a parte que já está pronta
   if (v.atende>0) { const ep = state.estoqueProd.find(e=>e.prodId===sel.value); if(ep) ep.qtdDisp -= v.atende; registrar('Saída', prodNome, v.atende, 'un', num); }
   // 2) abre ordem de produção automática para o que dá para produzir
-  if (v.produzir>0 && v.melhorBob) {
-    const ol = gerarLoteProducao();
-    state.producoes.unshift({
-      id:proxId('ORD',state.producoes), lote:ol, bobId:v.melhorBob.id, bobLote:v.melhorBob.lote,
-      prodId:sel.value, prodNome, qtdPlan:v.produzir, metPrev:parseFloat((v.produzir*v.metrosUn).toFixed(1)),
-      metReal:null,qtdReal:null,perdaM:null,perdaPct:null,saldoApos:null,
-      data:new Date().toLocaleString('pt-BR').slice(0,16), op:state.user.nome,
-      status:'Aberta', pedidoNum:num
-    });
-    state.proxLote++;
-    registrar('Reserva', prodNome, v.produzir, 'un', ol);
+  if (v.produzir>0) {
+    var restante = v.produzir;
+    var bobs = state.bobinas.filter(b=>b.status==='Ativo').slice().sort(function(a,b){ return metrosLivres(b)-metrosLivres(a); });
+    for (var bi=0; bi<bobs.length && restante>0; bi++){
+      var bob = bobs[bi];
+      var cabe = Math.floor(metrosLivres(bob)/v.metrosUn);
+      if (cabe<=0) continue;
+      var qProd = Math.min(restante, cabe);
+      var ol = gerarLoteProducao();
+      state.producoes.unshift({
+        id:proxId('ORD',state.producoes), lote:ol, bobId:bob.id, bobLote:bob.lote,
+        prodId:sel.value, prodNome, qtdPlan:qProd, metPrev:parseFloat((qProd*v.metrosUn).toFixed(1)),
+        metReal:null,qtdReal:null,perdaM:null,perdaPct:null,saldoApos:null,
+        data:new Date().toLocaleString('pt-BR').slice(0,16), op:state.user.nome,
+        status:'Aberta', pedidoNum:num
+      });
+      state.proxLote++;
+      registrar('Reserva', prodNome, qProd, 'un', ol);
+      restante -= qProd;
+    }
   }
   // 3) status do pedido conforme o resultado
   const status = v.pendente>0 ? 'Parcial' : (v.produzir>0 ? 'Em produção' : 'Atendido');
