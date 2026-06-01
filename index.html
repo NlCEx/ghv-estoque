@@ -298,17 +298,17 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
     <div class="login-sub" style="margin-top:8px">Paramentação Médica<br>Selecione seu perfil para entrar</div>
   </div>
   <div class="user-chips">
-    <div class="user-chip" onclick="pedirSenha('Admin','GHV','GH','ghv')">
+    <div class="user-chip" onclick="pedirSenha('GHV')">
       <div class="chip-avatar" style="background:rgba(46,134,222,.15);color:var(--blue2)">GH</div>
       <div class="chip-info"><div class="chip-name">GHV</div><div class="chip-role">Administrador · Acesso total</div></div>
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
     </div>
-    <div class="user-chip" onclick="pedirSenha('Operador','CONFORTEL','CT','ct')">
+    <div class="user-chip" onclick="pedirSenha('CONFORTEL')">
       <div class="chip-avatar" style="background:rgba(0,230,118,.1);color:var(--green)">CT</div>
       <div class="chip-info"><div class="chip-name">CONFORTEL</div><div class="chip-role">Operador · Produção e estoque</div></div>
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
     </div>
-    <div class="user-chip" onclick="pedirSenha('Operador','JMSA','JM','jm')">
+    <div class="user-chip" onclick="pedirSenha('JMSA')">
       <div class="chip-avatar" style="background:rgba(255,179,0,.1);color:var(--amber)">JM</div>
       <div class="chip-info"><div class="chip-name">JMSA</div><div class="chip-role">Operador · Produção e estoque</div></div>
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
@@ -837,8 +837,9 @@ function iniciarPolling(){
 
 // ── SENHA ────────────────────────────────────────────────────────────────────
 var _loginPendente = null;
-function pedirSenha(perfil, nome, sigla, senhaCorreta) {
-  _loginPendente = {perfil, nome, sigla, senhaCorreta};
+var _loginEmAndamento = false;
+function pedirSenha(nome) {
+  _loginPendente = {nome: nome};
   document.getElementById('senha-titulo').textContent = 'Entrar como ' + nome;
   document.getElementById('senha-erro').style.display = 'none';
   var saved = null;
@@ -852,25 +853,50 @@ function pedirSenha(perfil, nome, sigla, senhaCorreta) {
   setTimeout(function(){ inp.focus(); if(saved) inp.select(); }, 150);
 }
 function confirmarSenha() {
+  if (_loginEmAndamento || !_loginPendente) return;
   var val = document.getElementById('senha-input').value;
-  if (val === _loginPendente.senhaCorreta) {
-    try {
-      var cb = document.getElementById('senha-lembrar');
-      if (cb.checked) { localStorage.setItem('ghv_pw_' + _loginPendente.nome, val); }
-      else { localStorage.removeItem('ghv_pw_' + _loginPendente.nome); }
-    } catch(e) {}
-    var p = _loginPendente;
-    fecharSenha();
-    login(p.perfil, p.nome, p.sigla);
-  } else {
-    document.getElementById('senha-erro').style.display = 'block';
-    document.getElementById('senha-input').value = '';
-    document.getElementById('senha-input').focus();
-  }
+  var nome = _loginPendente.nome;
+  var lembrar = document.getElementById('senha-lembrar').checked;
+  var erro = document.getElementById('senha-erro');
+  erro.style.display = 'none';
+  if (!val) { erro.textContent = 'Digite a senha.'; erro.style.display = 'block'; return; }
+  _loginEmAndamento = true;
+  erro.textContent = 'Verificando…'; erro.style.color = 'var(--text2)'; erro.style.display = 'block';
+  // valida no backend (a senha não fica mais no código público)
+  window._loginCb = function(r) {
+    _loginEmAndamento = false;
+    if (r && r.ok) {
+      try {
+        if (lembrar) { localStorage.setItem('ghv_pw_' + nome, val); }
+        else { localStorage.removeItem('ghv_pw_' + nome); }
+      } catch(e) {}
+      fecharSenha();
+      login(r.perfil, nome, r.sigla);
+    } else {
+      erro.textContent = 'Senha incorreta. Tente novamente.';
+      erro.style.color = '#f55'; erro.style.display = 'block';
+      var inp = document.getElementById('senha-input');
+      inp.value = ''; inp.focus();
+    }
+  };
+  var s = document.createElement('script');
+  s.onerror = function() {
+    _loginEmAndamento = false;
+    erro.textContent = 'Falha de conexão. Tente novamente.';
+    erro.style.color = '#f55'; erro.style.display = 'block';
+  };
+  s.src = API_URL + '?acao=login&u=' + encodeURIComponent(nome) +
+          '&s=' + encodeURIComponent(val) + '&callback=_loginCb&t=' + Date.now();
+  document.body.appendChild(s);
+  setTimeout(function(){ if(s.parentNode) s.parentNode.removeChild(s); }, 15000);
 }
 function fecharSenha() {
   document.getElementById('senha-modal').style.display = 'none';
+  var erro = document.getElementById('senha-erro');
+  erro.style.color = '#f55';
+  erro.textContent = 'Senha incorreta. Tente novamente.';
   _loginPendente = null;
+  _loginEmAndamento = false;
 }
 
 // ── LOGIN ───────────────────────────────────────────────────────────────────
@@ -1547,6 +1573,7 @@ function aceitarPedido() {
   // 1) baixa do estoque a parte que já está pronta
   if (v.atende>0) { const ep = state.estoqueProd.find(e=>e.prodId===sel.value); if(ep) ep.qtdDisp -= v.atende; registrar('Saída', prodNome, v.atende, 'un', num); }
   // 2) abre ordem de produção automática para o que dá para produzir
+  var produzido = 0;
   if (v.produzir>0) {
     var restante = v.produzir;
     var bobs = state.bobinas.filter(b=>b.status==='Ativo').slice().sort(function(a,b){ return metrosLivres(b)-metrosLivres(a); });
@@ -1567,12 +1594,14 @@ function aceitarPedido() {
       registrar('Reserva', prodNome, qProd, 'un', ol);
       restante -= qProd;
     }
+    produzido = v.produzir - restante;
   }
-  // 3) status do pedido conforme o resultado
-  const status = v.pendente>0 ? 'Parcial' : (v.produzir>0 ? 'Em produção' : 'Atendido');
+  // 3) status do pedido (usa o total REALMENTE distribuído em ordens)
+  var pendenteReal = v.pendente + (v.produzir - produzido);
+  const status = pendenteReal>0 ? 'Parcial' : (produzido>0 ? 'Em produção' : 'Atendido');
   state.pedidos.unshift({
     id:'PED'+Date.now(), num, cliente:cli, data:new Date().toLocaleDateString('pt-BR'),
-    status, qtd, atendido:v.atende, produzindo:v.produzir, pendente:v.pendente,
+    status, qtd, atendido:v.atende, produzindo:produzido, pendente:pendenteReal,
     itens:[{prodNome, lote:'—', qtd}]
   });
   state.proxPedido++;
