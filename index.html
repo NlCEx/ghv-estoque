@@ -529,27 +529,9 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
         <div class="calc-row"><span class="calc-label">Metros disponíveis</span><span class="calc-val" id="mp-disp">—</span></div>
         <div class="calc-row"><span class="calc-label">Máximo de itens</span><span class="calc-val green" id="mp-max">—</span></div>
       </div>
-      <div id="mp-fase2" style="display:none">
-        <div class="section-title">Após o corte — preencher depois</div>
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">Metragem real usada</label>
-            <input class="form-input" id="mp-real" type="number" step="0.1" placeholder="0.0" oninput="calcPerda()">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Qtd. produzida real</label>
-            <input class="form-input" id="mp-qtdreal" type="number" step="1" placeholder="0">
-          </div>
-        </div>
-        <div class="form-calc" id="mp-perda-calc" style="display:none">
-          <div class="calc-row"><span class="calc-label">Perda de material</span><span class="calc-val amber" id="mp-perda-m">—</span></div>
-          <div class="calc-row"><span class="calc-label">Perda %</span><span class="calc-val" id="mp-perda-pct">—</span></div>
-          <div class="calc-row"><span class="calc-label">Saldo após produção</span><span class="calc-val green" id="mp-saldo">—</span></div>
-        </div>
-      </div>
       <div class="btn-row">
         <button class="btn btn-outline btn-sm" onclick="fecharModal('modal-prod')">Cancelar</button>
-        <button class="btn btn-success" style="flex:1" onclick="salvarProducao()">Confirmar e gerar lote</button>
+        <button class="btn btn-primary" style="flex:1" onclick="abrirOrdem()">Reservar material (abrir ordem)</button>
       </div>
     </div>
   </div>
@@ -590,6 +572,33 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
       <div class="btn-row">
         <button class="btn btn-outline btn-sm" onclick="fecharModal('modal-ped')">Cancelar</button>
         <button class="btn btn-primary" style="flex:1" onclick="salvarPedido()">Fechar Pedido</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL CONCLUIR PRODUÇÃO -->
+  <div class="modal-overlay" id="modal-concluir">
+    <div class="modal">
+      <div class="modal-handle"></div>
+      <div class="modal-title">Concluir produção</div>
+      <div class="modal-sub" id="mc-info">—</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Metragem real usada (m)</label>
+          <input class="form-input" id="mc-real" type="number" step="0.1" placeholder="0.0" oninput="calcPerdaConcluir()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Qtd. produzida real</label>
+          <input class="form-input" id="mc-qtdreal" type="number" step="1" placeholder="0">
+        </div>
+      </div>
+      <div class="form-calc" id="mc-perda-calc" style="display:none">
+        <div class="calc-row"><span class="calc-label">Perda de material</span><span class="calc-val amber" id="mc-perda-m">—</span></div>
+        <div class="calc-row"><span class="calc-label">Perda %</span><span class="calc-val" id="mc-perda-pct">—</span></div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-outline btn-sm" onclick="fecharModal('modal-concluir')">Cancelar</button>
+        <button class="btn btn-success" style="flex:1" onclick="salvarConclusao()">Concluir e gerar produto</button>
       </div>
     </div>
   </div>
@@ -658,8 +667,8 @@ const state = {
   ],
   estoqueMin: {MAT001:5,MAT002:8,MAT003:4,MAT004:3,MAT005:6},
   producoes: [
-    {id:'ORD001',lote:'GHV052026001',bobId:'BOB002',bobLote:'LOT050001',prodId:'PRD003',prodNome:'Avental Cirúrgico G',qtdPlan:120,metPrev:210,metReal:218.4,qtdReal:120,perdaM:8.4,perdaPct:4.0,saldoApos:52.5,data:'27/05/2026 08:30',op:'Maria Santos'},
-    {id:'ORD002',lote:'GHV052026002',bobId:'BOB004',bobLote:'LOT040002',prodId:'PRD009',prodNome:'Invólucro M',qtdPlan:300,metPrev:180,metReal:185.2,qtdReal:298,perdaM:5.2,perdaPct:2.9,saldoApos:330.4,data:'26/05/2026 14:15',op:'Maria Santos'},
+    {id:'ORD001',lote:'GHV052026001',bobId:'BOB002',bobLote:'LOT050001',prodId:'PRD003',prodNome:'Avental Cirúrgico G',qtdPlan:120,metPrev:210,metReal:218.4,qtdReal:120,perdaM:8.4,perdaPct:4.0,saldoApos:52.5,data:'27/05/2026 08:30',op:'Maria Santos',status:'Concluída'},
+    {id:'ORD002',lote:'GHV052026002',bobId:'BOB004',bobLote:'LOT040002',prodId:'PRD009',prodNome:'Invólucro M',qtdPlan:300,metPrev:180,metReal:185.2,qtdReal:298,perdaM:5.2,perdaPct:2.9,saldoApos:330.4,data:'26/05/2026 14:15',op:'Maria Santos',status:'Concluída'},
   ],
   estoqueProd: [
     {id:'EP001',lote:'GHV052026001',prodId:'PRD003',nome:'Avental Cirúrgico G',qtdDisp:120,qtdOrig:120,data:'27/05/2026'},
@@ -971,6 +980,7 @@ function renderBobinas() {
         </div>
       </div>
       <div class="prog-bar" style="margin-bottom:10px"><div class="prog-fill" style="width:${pct}%;background:${alerta?'var(--amber)':pct>50?'var(--green)':'var(--blue)'}"></div></div>
+      ${metrosReservados(b.id)>0 ? `<div style="font-size:11px;color:var(--amber);margin-bottom:8px">🔒 ${metrosReservados(b.id).toFixed(0)}m reservados · ${metrosLivres(b).toFixed(0)}m livres p/ novas ordens</div>` : ''}
       <div style="font-size:10px;color:var(--text3);display:flex;justify-content:space-between">
         <span>${b.gram}g/m² · ${b.largura}cm largura</span>
         <span>Entrada: ${b.entrada}</span>
@@ -983,6 +993,22 @@ function renderBobinas() {
 // ── PRODUÇÃO ────────────────────────────────────────────────────────────────
 function renderProducao() {
   const html = state.producoes.map(p => {
+    if (p.status === 'Aberta') {
+      return `<div class="card" style="border-color:var(--amber)">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px">
+          <div>
+            <div style="font-size:14px;font-weight:600">${p.prodNome}</div>
+            <div style="font-size:11px;color:var(--accent);font-family:var(--mono);margin-top:3px">${p.lote}</div>
+          </div>
+          <span class="badge badge-warn">⏳ Em produção</span>
+        </div>
+        <div style="font-size:12px;color:var(--text2);margin-bottom:10px">${p.qtdPlan} un. planejadas · <b>${p.metPrev}m reservados</b> da bobina ${p.bobLote}</div>
+        <div class="btn-row" style="margin-top:0">
+          <button class="btn btn-success btn-sm" style="flex:1" onclick="concluirOrdem('${p.id}')">Concluir</button>
+          <button class="btn btn-outline btn-sm" onclick="cancelarOrdem('${p.id}')">Cancelar</button>
+        </div>
+      </div>`;
+    }
     const corPerda = p.perdaPct > 10 ? 'var(--red)' : p.perdaPct > 5 ? 'var(--amber)' : 'var(--green)';
     return `<div class="card">
       <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px">
@@ -990,7 +1016,7 @@ function renderProducao() {
           <div style="font-size:14px;font-weight:600">${p.prodNome}</div>
           <div style="font-size:11px;color:var(--accent);font-family:var(--mono);margin-top:3px">${p.lote}</div>
         </div>
-        <span class="badge badge-blue">${p.qtdReal} un.</span>
+        <span class="badge badge-ok">✓ ${p.qtdReal} un.</span>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
         <div style="background:var(--surface2);border-radius:var(--r);padding:8px">
@@ -1113,7 +1139,8 @@ function atualizarSelectsBobinas() {
   const sel = document.getElementById('mp-bob');
   sel.innerHTML = '<option value="">Selecionar bobina...</option>';
   state.bobinas.filter(b=>b.status==='Ativo').forEach(b=>{
-    sel.innerHTML += `<option value="${b.id}" data-metros="${b.metrosDisp}">${b.lote} — ${b.nome} (${b.metrosDisp.toFixed(0)}m)</option>`;
+    const livres = metrosLivres(b);
+    sel.innerHTML += `<option value="${b.id}" data-livres="${livres}">${b.lote} — ${b.nome} (${livres.toFixed(0)}m livres)</option>`;
   });
 }
 function abrirModalProducao() {
@@ -1124,12 +1151,16 @@ function abrirModalProducao() {
   document.getElementById('mp-bob').value = '';
   document.getElementById('mp-prod').value = '';
   document.getElementById('mp-qtd').value = '';
-  document.getElementById('mp-real').value = '';
-  document.getElementById('mp-qtdreal').value = '';
   document.getElementById('mp-calc').style.display = 'none';
-  document.getElementById('mp-fase2').style.display = 'none';
-  document.getElementById('mp-perda-calc').style.display = 'none';
   document.getElementById('modal-prod').classList.add('open');
+}
+// Metros reservados por ordens ABERTAS de uma bobina
+function metrosReservados(bobId) {
+  return state.producoes.filter(function(o){return o.bobId===bobId && o.status==='Aberta';})
+    .reduce(function(s,o){return s + (o.metPrev||0);}, 0);
+}
+function metrosLivres(bob) {
+  return Math.max(0, parseFloat((bob.metrosDisp - metrosReservados(bob.id)).toFixed(1)));
 }
 function calcProducao() {
   const bobSel = document.getElementById('mp-bob');
@@ -1137,76 +1168,99 @@ function calcProducao() {
   const qtd = parseFloat(document.getElementById('mp-qtd').value)||0;
   const bobOpt = bobSel.options[bobSel.selectedIndex];
   const prodOpt = prodSel.options[prodSel.selectedIndex];
-  const metrosDisp = parseFloat(bobOpt.dataset.metros||0);
-  const metPorItem = parseFloat(prodOpt.dataset.m||0);
-  if (metrosDisp>0 && metPorItem>0 && qtd>0) {
+  const livres = parseFloat((bobOpt && bobOpt.dataset.livres)||0);
+  const metPorItem = parseFloat((prodOpt && prodOpt.dataset.m)||0);
+  if (livres>0 && metPorItem>0 && qtd>0) {
     const prev = qtd * metPorItem;
-    const max = Math.floor(metrosDisp / metPorItem);
+    const max = Math.floor(livres / metPorItem);
+    const cabe = prev <= livres;
     document.getElementById('mp-prev').textContent = prev.toFixed(1)+' m';
-    document.getElementById('mp-disp').textContent = metrosDisp.toFixed(0)+' m';
-    document.getElementById('mp-max').textContent = max+' un.';
+    document.getElementById('mp-disp').textContent = livres.toFixed(0)+' m livres';
+    const mEl = document.getElementById('mp-max');
+    mEl.textContent = (cabe ? 'OK — cabe' : 'Máx. '+max+' un.');
+    mEl.className = 'calc-val ' + (cabe ? 'green' : 'amber');
     document.getElementById('mp-calc').style.display = 'block';
-    document.getElementById('mp-fase2').style.display = 'block';
-    document.getElementById('mp-qtdreal').value = qtd;
   }
 }
-function calcPerda() {
-  const prodSel = document.getElementById('mp-prod');
-  const prodOpt = prodSel.options[prodSel.selectedIndex];
-  const metPorItem = parseFloat(prodOpt.dataset.m||0);
-  const qtd = parseFloat(document.getElementById('mp-qtd').value)||0;
-  const real = parseFloat(document.getElementById('mp-real').value)||0;
-  const bobSel = document.getElementById('mp-bob');
-  const bobOpt = bobSel.options[bobSel.selectedIndex];
-  const disp = parseFloat(bobOpt.dataset.metros||0);
-  if (real>0 && qtd>0 && metPorItem>0) {
-    const prev = qtd * metPorItem;
-    const perdaM = real - prev;
-    const perdaPct = (perdaM / prev)*100;
-    const saldo = disp - real;
-    document.getElementById('mp-perda-m').textContent = perdaM.toFixed(1)+' m';
-    const pEl = document.getElementById('mp-perda-pct');
-    pEl.textContent = perdaPct.toFixed(1)+'%';
-    pEl.className = 'calc-val '+(perdaPct>10?'red':perdaPct>5?'amber':'green');
-    document.getElementById('mp-saldo').textContent = saldo.toFixed(1)+' m';
-    document.getElementById('mp-perda-calc').style.display = 'block';
-  }
-}
-function salvarProducao() {
+// PASSO 1 — Abrir ordem (reserva o material; não baixa ainda)
+function abrirOrdem() {
   const lote = document.getElementById('mp-lote').textContent;
   const bobSel = document.getElementById('mp-bob');
   const prodSel = document.getElementById('mp-prod');
-  const bobOpt = bobSel.options[bobSel.selectedIndex];
   const prodOpt = prodSel.options[prodSel.selectedIndex];
   const qtd = parseFloat(document.getElementById('mp-qtd').value)||0;
-  const metPorItem = parseFloat(prodOpt.dataset.m||0);
-  if (!bobSel.value || !prodSel.value || qtd<=0) { toast('Preencha todos os campos','error'); return; }
-  const real = parseFloat(document.getElementById('mp-real').value)||qtd*metPorItem;
-  const qtdReal = parseFloat(document.getElementById('mp-qtdreal').value)||qtd;
-  const prev = qtd*metPorItem;
-  const perdaM = real-prev;
-  const perdaPct = (perdaM/prev)*100;
+  const metPorItem = parseFloat((prodOpt && prodOpt.dataset.m)||0);
+  if (!bobSel.value || !prodSel.value || qtd<=0) { toast('Selecione bobina, produto e quantidade','error'); return; }
   const bob = state.bobinas.find(b=>b.id===bobSel.value);
-  const saldoApos = bob.metrosDisp - real;
-  bob.metrosDisp = parseFloat(saldoApos.toFixed(1));
-  bob.saldoKg = parseFloat((saldoApos*(bob.gram*(bob.largura/100)/1000)).toFixed(2));
-  const nova = {
-    id:'ORD'+String(state.producoes.length+1).padStart(3,'0'),
-    lote, bobId:bob.id, bobLote:bob.lote,
+  const prev = qtd*metPorItem;
+  const livres = metrosLivres(bob);
+  if (prev > livres) { toast('Material insuficiente: precisa '+prev.toFixed(1)+'m, livre '+livres.toFixed(1)+'m','error'); return; }
+  state.producoes.unshift({
+    id:proxId('ORD',state.producoes), lote, bobId:bob.id, bobLote:bob.lote,
     prodId:prodSel.value, prodNome:prodOpt.text,
-    qtdPlan:qtd, metPrev:prev, metReal:real,
-    qtdReal, perdaM:parseFloat(perdaM.toFixed(1)), perdaPct:parseFloat(perdaPct.toFixed(1)),
-    saldoApos, data:new Date().toLocaleString('pt-BR').slice(0,16),
-    op:state.user.nome
-  };
-  state.producoes.unshift(nova);
-  const epExist = state.estoqueProd.find(e=>e.prodId===prodSel.value);
-  if (epExist) { epExist.qtdDisp += qtdReal; epExist.qtdOrig += qtdReal; }
-  else state.estoqueProd.push({id:'EP'+Date.now(),lote,prodId:prodSel.value,nome:prodOpt.text,qtdDisp:qtdReal,qtdOrig:qtdReal,data:new Date().toLocaleDateString('pt-BR')});
+    qtdPlan:qtd, metPrev:parseFloat(prev.toFixed(1)),
+    metReal:null, qtdReal:null, perdaM:null, perdaPct:null, saldoApos:null,
+    data:new Date().toLocaleString('pt-BR').slice(0,16), op:state.user.nome,
+    status:'Aberta'
+  });
   state.proxLote++;
   fecharModal('modal-prod');
+  renderProducao(); renderBobinas(); renderDash();
+  toast('Ordem '+lote+' aberta — material reservado');
+}
+// PASSO 2 — Concluir ordem
+var _ordemConcluindo = null;
+function concluirOrdem(id) {
+  const o = state.producoes.find(x=>x.id===id);
+  if (!o) return;
+  _ordemConcluindo = o;
+  document.getElementById('mc-info').textContent = o.prodNome + ' · ' + o.qtdPlan + ' un. planejadas · bobina ' + o.bobLote;
+  document.getElementById('mc-real').value = o.metPrev;
+  document.getElementById('mc-qtdreal').value = o.qtdPlan;
+  document.getElementById('modal-concluir').classList.add('open');
+  calcPerdaConcluir();
+}
+function calcPerdaConcluir() {
+  const o = _ordemConcluindo; if(!o) return;
+  const real = parseFloat(document.getElementById('mc-real').value)||0;
+  const prev = o.metPrev;
+  if (real>0 && prev>0) {
+    const perdaM = real - prev;
+    const perdaPct = (perdaM/prev)*100;
+    document.getElementById('mc-perda-m').textContent = perdaM.toFixed(1)+' m';
+    const pEl = document.getElementById('mc-perda-pct');
+    pEl.textContent = perdaPct.toFixed(1)+'%';
+    pEl.className = 'calc-val '+(perdaPct>10?'red':perdaPct>5?'amber':'green');
+    document.getElementById('mc-perda-calc').style.display = 'block';
+  }
+}
+function salvarConclusao() {
+  const o = _ordemConcluindo; if(!o) return;
+  const real = parseFloat(document.getElementById('mc-real').value)||o.metPrev;
+  const qtdReal = parseFloat(document.getElementById('mc-qtdreal').value)||o.qtdPlan;
+  const bob = state.bobinas.find(b=>b.id===o.bobId);
+  bob.metrosDisp = Math.max(0, parseFloat((bob.metrosDisp - real).toFixed(1)));
+  bob.saldoKg = parseFloat((bob.metrosDisp*(bob.gram*(bob.largura/100)/1000)).toFixed(2));
+  o.metReal = real; o.qtdReal = qtdReal;
+  o.perdaM = parseFloat((real-o.metPrev).toFixed(1));
+  o.perdaPct = parseFloat(((o.perdaM/o.metPrev)*100).toFixed(1));
+  o.saldoApos = bob.metrosDisp;
+  o.status = 'Concluída';
+  o.data = new Date().toLocaleString('pt-BR').slice(0,16);
+  const ep = state.estoqueProd.find(e=>e.prodId===o.prodId);
+  if (ep) { ep.qtdDisp += qtdReal; ep.qtdOrig += qtdReal; }
+  else state.estoqueProd.push({id:'EP'+Date.now(),lote:o.lote,prodId:o.prodId,nome:o.prodNome,qtdDisp:qtdReal,qtdOrig:qtdReal,data:new Date().toLocaleDateString('pt-BR')});
+  _ordemConcluindo = null;
+  fecharModal('modal-concluir');
   renderProducao(); renderEstoque(); renderBobinas(); renderDash();
-  toast('Lote '+lote+' gerado!');
+  toast('Produção concluída — '+qtdReal+' un. no estoque');
+}
+function cancelarOrdem(id) {
+  const o = state.producoes.find(x=>x.id===id);
+  if (!o || o.status!=='Aberta') return;
+  state.producoes = state.producoes.filter(x=>x.id!==id);
+  renderProducao(); renderBobinas(); renderDash();
+  toast('Ordem cancelada — reserva liberada');
 }
 
 // ── MODAL PEDIDO ─────────────────────────────────────────────────────────────
