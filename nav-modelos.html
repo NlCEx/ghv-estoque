@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<style>
+:root{
+  --bg:#0A1628;--surface:#0F2040;--surface2:#162850;--card:#1A3060;--card2:#1E3870;
+  --border:#2A4A80;--border2:#3A5A90;--blue:#2E86DE;--blue2:#5BA4F5;--accent:#00D4FF;
+  --green:#00E676;--amber:#FFB300;--red:#FF5252;--text:#EEF4FF;--text2:#8AAFD4;--text3:#4A6A94;
+  --sans:'Segoe UI',system-ui,sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;font-family:var(--sans)}
+body{background:#070d18;padding:30px;color:var(--text)}
+.title{text-align:center;font-size:22px;font-weight:700;margin-bottom:4px}
+.sub{text-align:center;color:var(--text2);font-size:13px;margin-bottom:26px}
+.row{display:flex;gap:30px;justify-content:center;flex-wrap:wrap;align-items:flex-start}
+.col{width:330px}
+.label{font-size:15px;font-weight:700;color:var(--blue2);text-align:center;margin-bottom:4px}
+.tag{display:inline-block;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;margin-bottom:8px;background:rgba(0,230,118,.15);color:var(--green);border:1px solid rgba(0,230,118,.3)}
+.desc{font-size:12px;color:var(--text2);line-height:1.5;text-align:center;margin-top:12px;min-height:72px}
+.phone{width:330px;height:600px;background:var(--bg);border:9px solid #11151c;border-radius:34px;overflow:hidden;position:relative;box-shadow:0 20px 50px rgba(0,0,0,.5)}
+.scr{position:absolute;inset:0;display:flex;flex-direction:column}
+.hd{padding:26px 16px 12px;display:flex;align-items:center;gap:9px;flex-shrink:0}
+.hd-mark{width:30px;height:30px;background:var(--blue);border-radius:9px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px}
+.hd-t{font-size:16px;font-weight:600}
+.hd-ico{width:30px;height:30px;border:1px solid var(--border2);border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--text2)}
+.hd-ico svg{width:16px;height:16px}
+.av{width:30px;height:30px;border-radius:50%;background:var(--card2);border:1.5px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--blue2)}
+.body{flex:1;overflow:hidden;padding:0 14px;position:relative}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:4px 0 12px}
+.st{background:var(--surface2);border:1px solid var(--border);border-radius:14px;padding:12px;position:relative;overflow:hidden}
+.st::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--blue)}
+.st.a::before{background:var(--amber)}
+.st-v{font-size:22px;font-weight:700;color:var(--blue2)}.st.a .st-v{color:var(--amber)}
+.st-l{font-size:10px;color:var(--text2);margin-top:2px}
+.item{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:11px;margin-bottom:8px}
+.item-t{font-size:13px;font-weight:500}.item-s{font-size:10px;color:var(--text2);margin-top:2px}
+.sec{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin:4px 0 8px}
+/* bottom nav */
+.bn{display:flex;background:var(--surface);border-top:1px solid var(--border);padding:8px 4px 12px;flex-shrink:0;position:relative}
+.bn-i{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;color:var(--text3)}
+.bn-i.on{color:var(--blue2)}
+.bn-i svg{width:20px;height:20px}
+.bn-i span{font-size:8.5px;font-weight:600;text-transform:uppercase;letter-spacing:.2px}
+.fab-c{position:absolute;left:50%;top:-18px;transform:translateX(-50%);width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--accent));display:flex;align-items:center;justify-content:center;box-shadow:0 6px 18px rgba(46,134,222,.5);border:3px solid var(--bg)}
+.fab-c svg{width:25px;height:25px;color:#fff}
+.fab-canto{position:absolute;bottom:78px;right:16px;width:50px;height:50px;border-radius:50%;background:var(--blue);display:flex;align-items:center;justify-content:center;box-shadow:0 8px 24px rgba(46,134,222,.4);z-index:30}
+.fab-canto svg{width:23px;height:23px;color:#fff}
+/* bottom sheet "Mais" */
+.sheet{position:absolute;left:0;right:0;bottom:0;background:var(--surface);border-top:1px solid var(--border2);border-radius:20px 20px 0 0;padding:14px 16px 18px;box-shadow:0 -10px 30px rgba(0,0,0,.4);z-index:20}
+.sheet-h{width:38px;height:4px;background:var(--border2);border-radius:2px;margin:0 auto 12px}
+.sheet-t{font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
+.menu-i{display:flex;align-items:center;gap:13px;padding:11px 10px;border-radius:10px;color:var(--text);font-size:14px}
+.menu-i svg{width:20px;height:20px;color:var(--blue2)}
+.menu-i.on{background:rgba(46,134,222,.13)}
+/* drawer */
+.drawer{position:absolute;inset:0;background:rgba(0,0,0,.5);display:flex;z-index:40}
+.drawer-m{width:240px;background:var(--surface);height:100%;padding:22px 12px;display:flex;flex-direction:column;gap:3px;box-shadow:8px 0 30px rgba(0,0,0,.5)}
+.dlogo{display:flex;align-items:center;gap:10px;padding:6px 10px 16px}
+.dsep{height:1px;background:var(--border);margin:8px 6px}
+</style>
+</head>
+<body>
+<div class="title">GHV — Como organizar a navegação (7 módulos)</div>
+<div class="sub">Início · Bobinas · Produção · Estoque · Pedidos · Catálogo · Histórico. Escolha o modelo (A, B ou C).</div>
+
+<div class="row">
+
+  <!-- ===== MODELO A ===== -->
+  <div class="col">
+    <div class="label">A — Barra + "Mais"</div>
+    <div style="text-align:center"><span class="tag">RECOMENDADO</span></div>
+    <div class="phone"><div class="scr">
+      <div class="hd"><div class="hd-mark">GHV</div><div class="hd-t" style="flex:1">Início</div><div class="av">G</div></div>
+      <div class="body">
+        <div class="stats">
+          <div class="st"><div class="st-v">4</div><div class="st-l">Bobinas ativas</div></div>
+          <div class="st a"><div class="st-v">2</div><div class="st-l">Estoque baixo</div></div>
+        </div>
+        <div class="sec">Bobinas em estoque</div>
+        <div class="item"><div class="item-t">TNT 40g Branco</div><div class="item-s">500 m · OK</div></div>
+        <!-- bottom sheet Mais aberto -->
+        <div class="sheet">
+          <div class="sheet-h"></div>
+          <div class="sheet-t">Mais</div>
+          <div class="menu-i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19 4.9A10 10 0 004.9 19"/></svg>Produção</div>
+          <div class="menu-i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M4 12h16M4 17h10"/></svg>Catálogo</div>
+          <div class="menu-i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Histórico</div>
+        </div>
+      </div>
+      <div class="bn">
+        <div class="bn-i on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span>Início</span></div>
+        <div class="bn-i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 00-1-1.7l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.7l7 4a2 2 0 002 0l7-4z"/></svg><span>Bobinas</span></div>
+        <div class="bn-i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.4 5.1L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.4-6.9A2 2 0 0016.7 4H7.2a2 2 0 00-1.8 1.1z"/></svg><span>Estoque</span></div>
+        <div class="bn-i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><span>Pedidos</span></div>
+        <div class="bn-i on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg><span>Mais</span></div>
+      </div>
+    </div></div>
+    <div class="desc">Barra com os 4 módulos do dia a dia + botão <b>Mais</b>, que abre uma gavetinha com Produção, Catálogo e Histórico. O "+" para cadastrar fica num botão flutuante. Limpo e organiza tudo sem apertar.</div>
+  </div>
+
+  <!-- ===== MODELO B ===== -->
+  <div class="col">
+    <div class="label">B — "+" central + Mais</div>
+    <div style="text-align:center"><span class="tag" style="visibility:hidden">.</span></div>
+    <div class="phone"><div class="scr">
+      <div class="hd"><div class="hd-mark">GHV</div><div class="hd-t" style="flex:1">Início</div><div class="av">G</div></div>
+      <div class="body">
+        <div class="stats">
+          <div class="st"><div class="st-v">4</div><div class="st-l">Bobinas ativas</div></div>
+          <div class="st a"><div class="st-v">2</div><div class="st-l">Estoque baixo</div></div>
+        </div>
+        <div class="sec">Bobinas em estoque</div>
+        <div class="item"><div class="item-t">TNT 40g Branco</div><div class="item-s">500 m · OK</div></div>
+        <div class="item"><div class="item-t">SMS 50g Azul</div><div class="item-s">53 m · Baixo</div></div>
+      </div>
+      <div class="bn">
+        <div class="fab-c"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
+        <div class="bn-i on" style="flex:1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span>Início</span></div>
+        <div class="bn-i" style="flex:1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 00-1-1.7l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.7l7 4a2 2 0 002 0l7-4z"/></svg><span>Bobinas</span></div>
+        <div style="flex:1"></div>
+        <div class="bn-i" style="flex:1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.4 5.1L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.4-6.9A2 2 0 0016.7 4H7.2a2 2 0 00-1.8 1.1z"/></svg><span>Estoque</span></div>
+        <div class="bn-i" style="flex:1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg><span>Mais</span></div>
+      </div>
+    </div></div>
+    <div class="desc">Mantém o botão <b>"+" central</b> (que você gostou) para cadastro rápido. Barra: Início, Bobinas, Estoque, Mais. O "Mais" abre Produção, Pedidos, Catálogo e Histórico.</div>
+  </div>
+
+  <!-- ===== MODELO C ===== -->
+  <div class="col">
+    <div class="label">C — Menu lateral (tudo)</div>
+    <div style="text-align:center"><span class="tag" style="visibility:hidden">.</span></div>
+    <div class="phone"><div class="scr">
+      <div class="hd"><div class="hd-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></div><div class="hd-t" style="flex:1">Início</div><div class="av">G</div></div>
+      <div class="body">
+        <div class="stats"><div class="st"><div class="st-v">4</div><div class="st-l">Bobinas</div></div><div class="st a"><div class="st-v">2</div><div class="st-l">Estoque baixo</div></div></div>
+      </div>
+      <!-- drawer aberto -->
+      <div class="drawer"><div class="drawer-m">
+        <div class="dlogo"><div class="hd-mark">GHV</div><div class="hd-t">GHV Estoque</div></div>
+        <div class="menu-i on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Início</div>
+        <div class="menu-i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 00-1-1.7l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.7l7 4a2 2 0 002 0l7-4z"/></svg>Bobinas</div>
+        <div class="menu-i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19 4.9A10 10 0 004.9 19"/></svg>Produção</div>
+        <div class="menu-i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.4 5.1L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.4-6.9A2 2 0 0016.7 4H7.2a2 2 0 00-1.8 1.1z"/></svg>Estoque</div>
+        <div class="menu-i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Pedidos</div>
+        <div class="dsep"></div>
+        <div class="menu-i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M4 12h16M4 17h10"/></svg>Catálogo</div>
+        <div class="menu-i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Histórico</div>
+      </div></div>
+      <div class="fab-canto"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
+    </div></div>
+    <div class="desc">Um menu lateral (ícone ☰ no topo) com <b>todos os módulos numa lista só</b>, bem organizados. Conteúdo ocupa a tela inteira. O "+" cadastra. Igual ao layout do PC, fica consistente.</div>
+  </div>
+
+</div>
+</body>
+</html>
