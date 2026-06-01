@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<style>
+:root{
+  --bg:#0A1628;--surface:#0F2040;--surface2:#162850;--card:#1A3060;--card2:#1E3870;
+  --border:#2A4A80;--border2:#3A5A90;--blue:#2E86DE;--blue2:#5BA4F5;--accent:#00D4FF;
+  --green:#00E676;--amber:#FFB300;--red:#FF5252;--text:#EEF4FF;--text2:#8AAFD4;--text3:#4A6A94;
+  --sans:'Segoe UI',system-ui,sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;font-family:var(--sans)}
+body{background:#070d18;padding:32px;color:var(--text)}
+.title{text-align:center;font-size:22px;font-weight:700;margin-bottom:6px}
+.sub{text-align:center;color:var(--text2);font-size:13px;margin-bottom:28px}
+.row{display:flex;gap:28px;justify-content:center;flex-wrap:wrap;align-items:flex-start}
+.col{width:330px}
+.label{font-size:14px;font-weight:700;color:var(--blue2);margin-bottom:4px;text-align:center}
+.desc{font-size:12px;color:var(--text2);line-height:1.45;text-align:center;margin-top:12px;min-height:54px}
+.tag{display:inline-block;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;margin-bottom:10px}
+.tag-rec{background:rgba(0,230,118,.15);color:var(--green);border:1px solid rgba(0,230,118,.3)}
+
+/* moldura celular */
+.phone{width:330px;height:640px;background:var(--bg);border:9px solid #11151c;border-radius:34px;overflow:hidden;position:relative;box-shadow:0 20px 50px rgba(0,0,0,.5)}
+.scr{position:absolute;inset:0;display:flex;flex-direction:column}
+
+/* header */
+.hd{padding:30px 18px 12px;display:flex;align-items:center;gap:9px;flex-shrink:0}
+.hd-mark{width:30px;height:30px;background:var(--blue);border-radius:9px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px}
+.hd-t{font-size:16px;font-weight:600}
+.hd-s{font-size:9px;color:var(--text2)}
+.hd-burger{margin-left:auto;width:34px;height:34px;border:1px solid var(--border2);border-radius:9px;display:flex;align-items:center;justify-content:center}
+.body{flex:1;overflow:hidden;padding:0 16px}
+
+/* stats */
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:14px}
+.st{background:var(--surface2);border:1px solid var(--border);border-radius:14px;padding:13px;position:relative;overflow:hidden}
+.st::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.st.b::before{background:var(--blue)} .st.g::before{background:var(--green)}
+.st.a::before{background:var(--amber)} .st.r::before{background:var(--red)}
+.st-v{font-size:24px;font-weight:700;line-height:1}
+.st.b .st-v{color:var(--blue2)} .st.g .st-v{color:var(--green)}
+.st.a .st-v{color:var(--amber)} .st.r .st-v{color:var(--red)}
+.st-l{font-size:10px;color:var(--text2);margin-top:3px}
+.sec{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin:6px 0 8px}
+.item{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:8px}
+.item-t{font-size:13px;font-weight:600}
+.item-s{font-size:10px;color:var(--text2);margin-top:2px}
+.bar{height:5px;background:var(--border);border-radius:3px;margin-top:8px;overflow:hidden}
+.bar>i{display:block;height:100%;border-radius:3px}
+
+/* bottom nav */
+.bn{display:flex;background:var(--surface);border-top:1px solid var(--border);padding:8px 4px 12px;flex-shrink:0}
+.bn-i{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;color:var(--text3)}
+.bn-i.on{color:var(--blue2)}
+.bn-i svg{width:21px;height:21px}
+.bn-i span{font-size:8.5px;font-weight:600;text-transform:uppercase;letter-spacing:.2px}
+
+/* fab central */
+.bn-fab{display:flex;background:var(--surface);border-top:1px solid var(--border);padding:8px 4px 12px;flex-shrink:0;align-items:center;position:relative}
+.fab{position:absolute;left:50%;top:-18px;transform:translateX(-50%);width:54px;height:54px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--accent));display:flex;align-items:center;justify-content:center;box-shadow:0 6px 18px rgba(46,134,222,.5);border:3px solid var(--bg)}
+.fab svg{width:26px;height:26px;color:#fff}
+
+/* drawer overlay */
+.drawer{position:absolute;inset:0;background:rgba(0,0,0,.5);display:flex}
+.drawer-menu{width:230px;background:var(--surface);height:100%;padding:24px 14px;display:flex;flex-direction:column;gap:6px;box-shadow:8px 0 30px rgba(0,0,0,.5)}
+.dr-i{display:flex;align-items:center;gap:13px;padding:13px 14px;border-radius:10px;color:var(--text2);font-size:14px;font-weight:500}
+.dr-i.on{background:rgba(46,134,222,.15);color:var(--blue2)}
+.dr-i svg{width:20px;height:20px}
+
+/* home atalhos */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:6px}
+.tile{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:18px 14px;display:flex;flex-direction:column;gap:10px;min-height:104px;justify-content:space-between}
+.tile-ic{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center}
+.tile-ic svg{width:22px;height:22px}
+.tile-t{font-size:14px;font-weight:600}
+.tile-c{font-size:11px;color:var(--text2)}
+.ic-b{background:rgba(46,134,222,.15);color:var(--blue2)} .ic-g{background:rgba(0,230,118,.12);color:var(--green)}
+.ic-a{background:rgba(255,179,0,.12);color:var(--amber)} .ic-r{background:rgba(255,82,82,.12);color:var(--red)}
+.ic-c{background:rgba(0,212,255,.12);color:var(--accent)} .ic-p{background:rgba(138,175,212,.12);color:var(--text2)}
+</style>
+</head>
+<body>
+<div class="title">GHV Estoque — Modelos de layout para celular</div>
+<div class="sub">4 opções de navegação. Veja qual prefere e me diga a letra (A, B, C ou D).</div>
+
+<div class="row">
+
+  <!-- ===== A: BARRA INFERIOR (atual) ===== -->
+  <div class="col">
+    <div class="label">A — Barra inferior (atual)</div>
+    <div style="text-align:center"><span class="tag tag-rec">RECOMENDADO</span></div>
+    <div class="phone"><div class="scr">
+      <div class="hd"><div class="hd-mark">GHV</div><div><div class="hd-t">Dashboard</div><div class="hd-s">Admin · GHV</div></div></div>
+      <div class="body">
+        <div class="stats">
+          <div class="st b"><div class="st-v">4</div><div class="st-l">Bobinas ativas</div></div>
+          <div class="st a"><div class="st-v">2</div><div class="st-l">Estoque baixo</div></div>
+          <div class="st g"><div class="st-v">2</div><div class="st-l">Produção/mês</div></div>
+          <div class="st b"><div class="st-v">1</div><div class="st-l">Pedidos</div></div>
+        </div>
+        <div class="sec">Bobinas em estoque</div>
+        <div class="item"><div class="item-t">TNT 40g Branco</div><div class="item-s">Lote LOT040001 · 28kg</div><div class="bar"><i style="width:90%;background:var(--green)"></i></div></div>
+        <div class="item"><div class="item-t">SMS 50g Azul</div><div class="item-s">Lote LOT050001 · 4.2kg</div><div class="bar"><i style="width:22%;background:var(--amber)"></i></div></div>
+      </div>
+      <div class="bn">
+        <div class="bn-i on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span>Início</span></div>
+        <div class="bn-i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 00-1-1.7l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.7l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg><span>Bobinas</span></div>
+        <div class="bn-i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19 4.9A10 10 0 004.9 19"/></svg><span>Produção</span></div>
+        <div class="bn-i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.4 5.1L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.4-6.9A2 2 0 0016.7 4H7.2a2 2 0 00-1.8 1.1z"/></svg><span>Estoque</span></div>
+        <div class="bn-i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><span>Pedidos</span></div>
+      </div>
+    </div></div>
+    <div class="desc">Navegação fixa embaixo, no alcance do polegar. Troca instantânea entre as 5 telas. Padrão dos apps (Instagram, WhatsApp). <b>Mais funcional para uso rápido.</b></div>
+  </div>
+
+  <!-- ===== B: BARRA + BOTÃO CENTRAL ===== -->
+  <div class="col">
+    <div class="label">B — Barra + botão de ação (+)</div>
+    <div style="text-align:center"><span class="tag" style="visibility:hidden">.</span></div>
+    <div class="phone"><div class="scr">
+      <div class="hd"><div class="hd-mark">GHV</div><div><div class="hd-t">Dashboard</div><div class="hd-s">Admin · GHV</div></div></div>
+      <div class="body">
+        <div class="stats">
+          <div class="st b"><div class="st-v">4</div><div class="st-l">Bobinas ativas</div></div>
+          <div class="st a"><div class="st-v">2</div><div class="st-l">Estoque baixo</div></div>
+          <div class="st g"><div class="st-v">2</div><div class="st-l">Produção/mês</div></div>
+          <div class="st b"><div class="st-v">1</div><div class="st-l">Pedidos</div></div>
+        </div>
+        <div class="sec">Bobinas em estoque</div>
+        <div class="item"><div class="item-t">TNT 40g Branco</div><div class="item-s">Lote LOT040001 · 28kg</div><div class="bar"><i style="width:90%;background:var(--green)"></i></div></div>
+        <div class="item"><div class="item-t">SMS 50g Azul</div><div class="item-s">Lote LOT050001 · 4.2kg</div><div class="bar"><i style="width:22%;background:var(--amber)"></i></div></div>
+      </div>
+      <div class="bn-fab">
+        <div class="fab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
+        <div class="bn-i on" style="flex:1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span>Início</span></div>
+        <div class="bn-i" style="flex:1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 00-1-1.7l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.7l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg><span>Bobinas</span></div>
+        <div style="flex:1"></div>
+        <div class="bn-i" style="flex:1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.4 5.1L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.4-6.9A2 2 0 0016.7 4H7.2a2 2 0 00-1.8 1.1z"/></svg><span>Estoque</span></div>
+        <div class="bn-i" style="flex:1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><span>Pedidos</span></div>
+      </div>
+    </div></div>
+    <div class="desc">Igual à opção A, mas com um botão grande "+" no centro para a ação mais usada (cadastrar bobina/pedido). Cadastro rápido sempre à mão.</div>
+  </div>
+
+  <!-- ===== C: MENU HAMBÚRGUER ===== -->
+  <div class="col">
+    <div class="label">C — Menu lateral (hambúrguer)</div>
+    <div style="text-align:center"><span class="tag" style="visibility:hidden">.</span></div>
+    <div class="phone"><div class="scr">
+      <div class="hd"><div class="hd-mark">GHV</div><div><div class="hd-t">Dashboard</div><div class="hd-s">Admin · GHV</div></div>
+        <div class="hd-burger"><svg viewBox="0 0 24 24" fill="none" stroke="var(--text2)" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></div>
+      </div>
+      <div class="body">
+        <div class="stats">
+          <div class="st b"><div class="st-v">4</div><div class="st-l">Bobinas ativas</div></div>
+          <div class="st a"><div class="st-v">2</div><div class="st-l">Estoque baixo</div></div>
+          <div class="st g"><div class="st-v">2</div><div class="st-l">Produção/mês</div></div>
+          <div class="st b"><div class="st-v">1</div><div class="st-l">Pedidos</div></div>
+        </div>
+        <div class="sec">Bobinas em estoque</div>
+        <div class="item"><div class="item-t">TNT 40g Branco</div><div class="item-s">Lote LOT040001 · 28kg</div><div class="bar"><i style="width:90%;background:var(--green)"></i></div></div>
+      </div>
+      <!-- drawer aberto (ilustração) -->
+      <div class="drawer">
+        <div class="drawer-menu">
+          <div class="dr-i on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Início</div>
+          <div class="dr-i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 00-1-1.7l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.7l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg>Bobinas</div>
+          <div class="dr-i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19 4.9A10 10 0 004.9 19"/></svg>Produção</div>
+          <div class="dr-i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.4 5.1L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.4-6.9A2 2 0 0016.7 4H7.2a2 2 0 00-1.8 1.1z"/></svg>Estoque</div>
+          <div class="dr-i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Pedidos</div>
+        </div>
+      </div>
+    </div></div>
+    <div class="desc">Menu escondido atrás do ícone ≡ no topo. Sobra mais espaço pro conteúdo, mas exige 2 toques pra trocar de tela e a navegação fica menos visível.</div>
+  </div>
+
+  <!-- ===== D: HOME COM ATALHOS GRANDES ===== -->
+  <div class="col">
+    <div class="label">D — Início com atalhos grandes</div>
+    <div style="text-align:center"><span class="tag" style="visibility:hidden">.</span></div>
+    <div class="phone"><div class="scr">
+      <div class="hd"><div class="hd-mark">GHV</div><div><div class="hd-t">GHV Estoque</div><div class="hd-s">Olá, Admin</div></div></div>
+      <div class="body">
+        <div class="sec" style="margin-top:2px">O que você quer fazer?</div>
+        <div class="grid2">
+          <div class="tile"><div class="tile-ic ic-b"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 00-1-1.7l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.7l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg></div><div><div class="tile-t">Bobinas</div><div class="tile-c">4 ativas</div></div></div>
+          <div class="tile"><div class="tile-ic ic-g"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19 4.9A10 10 0 004.9 19"/></svg></div><div><div class="tile-t">Produção</div><div class="tile-c">2 ordens</div></div></div>
+          <div class="tile"><div class="tile-ic ic-a"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.4 5.1L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.4-6.9A2 2 0 0016.7 4H7.2a2 2 0 00-1.8 1.1z"/></svg></div><div><div class="tile-t">Estoque</div><div class="tile-c">2 em falta</div></div></div>
+          <div class="tile"><div class="tile-ic ic-c"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div><div><div class="tile-t">Pedidos</div><div class="tile-c">1 aberto</div></div></div>
+        </div>
+      </div>
+      <div class="bn">
+        <div class="bn-i on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12l9-9 9 9"/><path d="M5 10v10h14V10"/></svg><span>Início</span></div>
+        <div class="bn-i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 00-1-1.7l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.7l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg><span>Bobinas</span></div>
+        <div class="bn-i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.4 5.1L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.4-6.9A2 2 0 0016.7 4H7.2a2 2 0 00-1.8 1.1z"/></svg><span>Estoque</span></div>
+        <div class="bn-i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><span>Pedidos</span></div>
+      </div>
+    </div></div>
+    <div class="desc">Tela inicial vira um painel de botões grandes (fácil de tocar). Bom para quem usa poucas funções por vez. Pode combinar com a barra inferior.</div>
+  </div>
+
+</div>
+</body>
+</html>
