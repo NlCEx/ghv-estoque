@@ -1,6 +1,7 @@
 // GHV Estoque - Service Worker (PWA)
-// Cache-first para os arquivos do app; rede para o resto.
-const CACHE = 'ghv-estoque-v1';
+// HTML: network-first (sempre pega a versão nova quando online; cache é só fallback offline).
+// Demais arquivos: cache-first com atualização em segundo plano.
+const CACHE = 'ghv-estoque-v3';
 const ASSETS = [
   './',
   './index.html',
@@ -25,15 +26,32 @@ self.addEventListener('activate', function (e) {
 });
 
 self.addEventListener('fetch', function (e) {
-  // Só lida com GET. Chamadas de dados (POST à API) passam direto pela rede.
   if (e.request.method !== 'GET') return;
-  e.respondWith(
-    caches.match(e.request).then(function (cached) {
-      return cached || fetch(e.request).then(function (resp) {
+  var isHTML = e.request.mode === 'navigate' ||
+    (e.request.headers.get('accept') || '').indexOf('text/html') !== -1;
+
+  if (isHTML) {
+    // network-first: tenta a rede; se falhar (offline), usa o cache
+    e.respondWith(
+      fetch(e.request).then(function (resp) {
+        var copy = resp.clone();
+        caches.open(CACHE).then(function (c) { c.put(e.request, copy); });
         return resp;
       }).catch(function () {
-        return cached;
-      });
-    })
-  );
+        return caches.match(e.request).then(function (c) { return c || caches.match('./index.html'); });
+      })
+    );
+  } else {
+    // cache-first: rápido; atualiza em segundo plano
+    e.respondWith(
+      caches.match(e.request).then(function (cached) {
+        var net = fetch(e.request).then(function (resp) {
+          var copy = resp.clone();
+          caches.open(CACHE).then(function (c) { c.put(e.request, copy); });
+          return resp;
+        }).catch(function () { return cached; });
+        return cached || net;
+      })
+    );
+  }
 });
