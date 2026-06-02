@@ -1,7 +1,7 @@
 // GHV Estoque - Service Worker (PWA)
 // HTML: network-first (sempre pega a versão nova quando online; cache é só fallback offline).
 // Demais arquivos: cache-first com atualização em segundo plano.
-const CACHE = 'ghv-estoque-v5';
+const CACHE = 'ghv-estoque-v6';
 const ASSETS = [
   './',
   './index.html',
