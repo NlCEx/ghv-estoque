@@ -67,25 +67,26 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
 .nav-dot{width:4px;height:4px;border-radius:50%;background:var(--blue);position:absolute;bottom:2px}
 
 /* ── CARDS ── */
-.card{background:var(--card);border:1px solid var(--border);border-radius:var(--r2);padding:16px;margin-bottom:10px}
-.card-sm{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:12px;margin-bottom:8px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--r2);padding:16px;margin-bottom:10px;box-shadow:0 6px 18px -10px rgba(0,0,0,.35)}
+.card-sm{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:13px 14px;margin-bottom:10px;box-shadow:0 6px 18px -12px rgba(0,0,0,.3)}
 .card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
 .card-title{font-size:12px;font-weight:500;color:var(--text2);text-transform:uppercase;letter-spacing:.8px}
 
 /* ── STAT CARDS ── */
-.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
-.stat-card{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r2);padding:16px;position:relative;overflow:hidden}
-.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
-.stat-card.blue::before{background:var(--blue)}
-.stat-card.green::before{background:var(--green)}
-.stat-card.amber::before{background:var(--amber)}
-.stat-card.red::before{background:var(--red)}
-.stat-val{font-size:28px;font-weight:600;line-height:1;margin-bottom:4px}
-.stat-card.blue .stat-val{color:var(--blue2)}
-.stat-card.green .stat-val{color:var(--green)}
-.stat-card.amber .stat-val{color:var(--amber)}
-.stat-card.red .stat-val{color:var(--red)}
-.stat-label{font-size:11px;color:var(--text2);font-weight:400}
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+.stat-card{border:none;border-radius:var(--r2);padding:16px 16px 15px;position:relative;overflow:hidden;color:#fff}
+.stat-card::before{display:none}
+.stat-card.blue{background:linear-gradient(135deg,#2E86DE,#5BA4F5);box-shadow:0 12px 26px -10px rgba(46,134,222,.85)}
+.stat-card.green{background:linear-gradient(135deg,#00C853,#00E676);box-shadow:0 12px 26px -10px rgba(0,200,83,.7)}
+.stat-card.amber{background:linear-gradient(135deg,#FF8F00,#FFC107);box-shadow:0 12px 26px -10px rgba(255,160,0,.75)}
+.stat-card.red{background:linear-gradient(135deg,#E53935,#FF5252);box-shadow:0 12px 26px -10px rgba(229,57,53,.78)}
+.stat-card.violet{background:linear-gradient(135deg,#7C4DFF,#B388FF);box-shadow:0 12px 26px -10px rgba(124,77,255,.78)}
+.stat-val{font-size:30px;font-weight:700;line-height:1;margin-bottom:4px;color:#fff}
+.stat-label{font-size:11px;color:rgba(255,255,255,.85);font-weight:500}
+.stat-card.green .stat-val{color:#053018}
+.stat-card.green .stat-label{color:rgba(5,48,24,.72)}
+.stat-card.amber .stat-val{color:#2a1c00}
+.stat-card.amber .stat-label{color:rgba(42,28,0,.72)}
 
 /* ── BADGES ── */
 .badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:600;padding:3px 8px;border-radius:20px;letter-spacing:.3px}
@@ -128,14 +129,14 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
 .calc-val.red{color:var(--red)}
 
 /* ── BUTTONS ── */
-.btn{width:100%;padding:14px;border-radius:var(--r2);border:none;font-family:var(--sans);font-size:14px;font-weight:600;cursor:pointer;transition:all .15s;letter-spacing:.2px}
+.btn{width:100%;padding:14px;border-radius:999px;border:none;font-family:var(--sans);font-size:14px;font-weight:600;cursor:pointer;transition:all .15s;letter-spacing:.2px}
 .btn:active{transform:scale(.98)}
-.btn-primary{background:var(--blue);color:#fff}
-.btn-primary:hover{background:#2070C0}
-.btn-success{background:linear-gradient(135deg,#00C853,#00E676);color:#003300}
-.btn-outline{background:transparent;color:var(--blue2);border:1px solid var(--border2)}
+.btn-primary{background:linear-gradient(135deg,#2E86DE,#7C4DFF);color:#fff;box-shadow:0 10px 24px -8px rgba(80,90,230,.65)}
+.btn-primary:hover{filter:brightness(1.06)}
+.btn-success{background:linear-gradient(135deg,#00C853,#00E676);color:#003300;box-shadow:0 10px 24px -8px rgba(0,200,83,.6)}
+.btn-outline{background:transparent;color:var(--blue2);border:1.5px solid var(--border2)}
 .btn-danger{background:rgba(255,82,82,.15);color:var(--red);border:1px solid rgba(255,82,82,.2)}
-.btn-sm{padding:8px 16px;width:auto;font-size:12px;border-radius:var(--r)}
+.btn-sm{padding:8px 18px;width:auto;font-size:12px;border-radius:999px}
 .btn-row{display:flex;gap:10px;margin-top:16px}
 
 /* ── SECTION TITLE ── */
@@ -271,6 +272,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--s
   --text3:#8AAFD4;
 }
 .light #shell,.light .page{background:var(--bg)}
+.light .card,.light .card-sm{border-color:#E3EAF6;box-shadow:0 8px 22px -12px rgba(70,100,170,.28)}
 .light .modal-overlay{background:rgba(10,22,40,.55)}
 .light .toast{background:var(--surface);box-shadow:0 4px 20px rgba(0,0,0,.12)}
 .light .user-chip:hover{background:var(--card2)}
@@ -1126,8 +1128,8 @@ function renderDash() {
   document.getElementById('dash-stats').innerHTML = `
     <div class="stat-card blue"><div class="stat-val">${ativas}</div><div class="stat-label">Bobinas ativas</div></div>
     <div class="stat-card ${baixas>0?'amber':'green'}"><div class="stat-val">${baixas}</div><div class="stat-label">Estoque baixo</div></div>
-    <div class="stat-card blue" onclick="navTo('prod',document.querySelector('[data-page=prod]'))" style="cursor:pointer"><div class="stat-val">${prodMes}</div><div class="stat-label">Prod. este mês</div></div>
-    <div class="stat-card green"><div class="stat-val">${pedAbertos}</div><div class="stat-label">Pedidos abertos</div></div>
+    <div class="stat-card green" onclick="navTo('prod',document.querySelector('[data-page=prod]'))" style="cursor:pointer"><div class="stat-val">${prodMes}</div><div class="stat-label">Prod. este mês</div></div>
+    <div class="stat-card violet"><div class="stat-val">${pedAbertos}</div><div class="stat-label">Pedidos abertos</div></div>
   `;
 
   if (baixas > 0) {
